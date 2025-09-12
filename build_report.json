@@ -1,0 +1,8 @@
+{
+  "dotnet_available": false,
+  "dotnet_version": "/bin/sh: 1: dotnet: not found",
+  "build_attempted": false,
+  "build_success": false,
+  "stdout": "",
+  "stderr": "dotnet SDK not available in this environment."
+}

@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SistemaHotelAloha.AccesoDat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SistemaHotelAloha.Web", "SistemaHotelAloha.Web\SistemaHotelAloha.Web.csproj", "{C9959CBC-39BA-4E35-B55E-28396640D48D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WinForms", "WinForms\WinForms.csproj", "{B32744DA-BD55-4799-AAED-5C789997D849}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{C9959CBC-39BA-4E35-B55E-28396640D48D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C9959CBC-39BA-4E35-B55E-28396640D48D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C9959CBC-39BA-4E35-B55E-28396640D48D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B32744DA-BD55-4799-AAED-5C789997D849}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B32744DA-BD55-4799-AAED-5C789997D849}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B32744DA-BD55-4799-AAED-5C789997D849}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B32744DA-BD55-4799-AAED-5C789997D849}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

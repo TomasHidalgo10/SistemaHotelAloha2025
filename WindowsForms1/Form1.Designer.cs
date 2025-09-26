@@ -1,4 +1,4 @@
-﻿namespace SistemaHotelAloha.Desktop
+﻿namespace WindowsForms1
 {
     partial class Form1
     {

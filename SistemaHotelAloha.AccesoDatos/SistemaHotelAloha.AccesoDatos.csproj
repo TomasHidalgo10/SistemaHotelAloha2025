@@ -8,6 +8,19 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SistemaHotelAloha.Dominio\SistemaHotelAloha.Dominio.csproj" />
-  </ItemGroup>
+  
+    <PackageReference Include="MySql.Data" Version="9.4.0" />
 
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
+
+    <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.0" />
+</ItemGroup>
+
+
+  <ItemGroup>
+    <Compile Remove="Disabled_EF\**\*.cs" />
+    <None Include="Disabled_EF\**\*.cs" />
+  </ItemGroup>
 </Project>

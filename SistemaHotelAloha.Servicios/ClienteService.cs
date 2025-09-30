@@ -15,9 +15,7 @@ namespace SistemaHotelAloha.Servicios
         {
             var cliente = GetById(id);
             if (cliente == null)
-                return false; 
-
-           
+                return false;
             cliente.SetNombre(nombre);
             cliente.SetApellido(apellido);
             cliente.SetEmail(email);

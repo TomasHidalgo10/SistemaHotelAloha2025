@@ -1,0 +1,27 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@inherits LayoutComponentBase
+
+<div class="topbar">
+    <div class="left">
+        <a href="/">ALOHA</a>
+        <a href="/hoteles">Buscar</a>
+        <a href="/mis-reservas">Mis reservas</a>
+        <a href="/login">Login</a>
+        <a href="/register">Registro</a>
+        <a href="/logout">Salir</a>
+    </div>
+    <div class="right">
+        <AuthorizeView>
+            <Authorized>
+                Hola, @context.User.Identity?.Name
+            </Authorized>
+            <NotAuthorized>
+                Invitado
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+</div>
+
+<div class="content">
+    @Body
+</div>

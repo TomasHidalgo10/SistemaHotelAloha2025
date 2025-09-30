@@ -1,0 +1,24 @@
+<div class="featured">
+  <h3>Destinos destacados</h3>
+  <div class="featured-grid">
+    @foreach (var d in data)
+    {
+      <a class="feature-card" href="@($"/hoteles?destino={Uri.EscapeDataString(d.Nombre)}")">
+        <img src="@d.Img" loading="lazy" alt="@d.Nombre" />
+        <div class="overlay">
+          <span>@d.Nombre</span>
+        </div>
+      </a>
+    }
+  </div>
+</div>
+
+@code {
+  class Destino { public string Nombre {get;set;} = ""; public string Img {get;set;} = ""; }
+  List<Destino> data = new(){
+    new Destino{ Nombre="Buenos Aires", Img="/img/feat1.png" },
+    new Destino{ Nombre="Córdoba", Img="/img/feat2.png" },
+    new Destino{ Nombre="Mendoza", Img="/img/feat3.png" },
+    new Destino{ Nombre="Bariloche", Img="/img/feat4.png" }
+  };
+}

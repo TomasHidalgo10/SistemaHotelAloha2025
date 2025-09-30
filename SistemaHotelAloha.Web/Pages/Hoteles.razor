@@ -1,0 +1,128 @@
+@page "/hoteles"
+@using SistemaHotelAloha.Web.Models
+@using SistemaHotelAloha.Web.Services
+@using SistemaHotelAloha.Web.Components
+@inject NavigationManager Nav
+@inject HotelService HotelSvc
+
+<div class="results-layout">
+  <aside class="filters-wrap">
+    <Filters OnChange="OnFiltros" />
+  </aside>
+  <section class="results-wrap">
+    <div class="results-head">
+      <h2>Resultados</h2>
+      @if (total > 0) { <span class="muted">@total resultados</span> }
+    </div>
+
+    @if (loading)
+    {
+        <div class="skeleton-grid">
+            @for (int i = 0; i < 8; i++)
+            {
+                <div class="skeleton-card"></div>
+            }
+        </div>
+    }
+    else if (hoteles is null || hoteles.Count == 0)
+    {
+        <div class="empty">
+            <h3>Sin resultados</h3>
+            <p class="muted">Proba cambiar filtros o fechas.</p>
+        </div>
+    }
+    else
+    {
+        <!-- Render de tarjetas -->
+        @foreach (var h in hoteles)
+        {
+            <HotelCard Hotel="h" />
+        }
+
+        <!-- Fallback de debug (plain HTML) por si hubiera algún problema con el componente -->
+        <div class="debug-fallback">
+            @foreach (var h in hoteles)
+            {
+                <div class="card" style="margin:8px 0; border:1px dashed #2c3b4a;">
+                    <div><b>@h.Nombre</b> — @h.Direccion.Ciudad · ⭐ @h.Calificacion</div>
+                    <div>Desde @h.Habitaciones.Min(x => x.PrecioBasePorNoche).ToString("C")</div>
+                </div>
+            }
+        </div>
+
+        <nav class="pager">
+            <button class="btn" disabled="@(pagina<=1)" @onclick="Prev">«</button>
+            <span>Página @pagina de @totalPaginas</span>
+            <button class="btn" disabled="@(pagina>=totalPaginas)" @onclick="Next">»</button>
+        </nav>
+    }
+  </section>
+</div>
+
+@code {
+    // query state
+    string destino = "";
+    DateOnly? ci, co;
+    int ad = 2, ni = 0;
+    string[]? amen;
+    decimal? pmin, pmax;
+    string? orden;
+
+    int total = 0;
+    int pagina = 1, tam = 10, totalPaginas = 1;
+    bool loading = true;
+
+    List<Hotel> hoteles = new();
+
+    System.Timers.Timer? _debounce;
+    System.Threading.CancellationTokenSource? _cts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var q = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        destino = q.Get("destino") ?? "";
+        if (DateOnly.TryParse(q.Get("ci"), out var dci)) ci = dci;
+        if (DateOnly.TryParse(q.Get("co"), out var dco)) co = dco;
+        ad = int.TryParse(q.Get("ad"), out var _ad) ? _ad : 2;
+        ni = int.TryParse(q.Get("ni"), out var _ni) ? _ni : 0;
+
+        await Buscar(true);
+    }
+
+    async Task Buscar(bool first = false)
+    {
+        loading = true;
+        StateHasChanged();
+
+        _cts?.Cancel();
+        _cts = new System.Threading.CancellationTokenSource();
+
+        var req = new BusquedaRequest(destino, ci, co, ad, ni, pagina, tam, orden, amen, pmin, pmax);
+        var r = await HotelSvc.BuscarAsync(req);
+        total = r.Total;
+        hoteles = r.Hoteles;
+        totalPaginas = Math.Max(1, (int)Math.Ceiling(total / (double)tam));
+        loading = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private Task OnFiltros((string[]? amen, decimal? min, decimal? max, string? orden) f)
+    {
+        this.amen = f.amen;
+        this.pmin = f.min;
+        this.pmax = f.max;
+        this.orden = f.orden;
+        pagina = 1;
+
+        _debounce?.Stop();
+        _debounce = new System.Timers.Timer(200) { AutoReset = false };
+        _debounce.Elapsed += async (_, __) => await Buscar();
+        _debounce.Start();
+
+        return Task.CompletedTask; // <- elimina CS1998
+    }
+
+    Task Prev() { pagina--; return Buscar(); }
+    Task Next() { pagina++; return Buscar(); }
+}

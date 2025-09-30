@@ -1,0 +1,12 @@
+@using SistemaHotelAloha.Web.Models
+
+<div class="gallery">
+@foreach (var f in Fotos)
+{
+    <img src="@f.Url" alt="@f.Alt" style="width:180px;height:120px;object-fit:cover;margin-right:8px;border-radius:8px;" />
+}
+</div>
+
+@code{
+    [Parameter] public List<Foto> Fotos { get; set; } = new();
+}

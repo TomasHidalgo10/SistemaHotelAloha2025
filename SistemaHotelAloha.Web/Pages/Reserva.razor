@@ -1,0 +1,73 @@
+@page "/reserva/{hotelId:int}/{habitacionTipoId:int}"
+@using SistemaHotelAloha.Web.Models
+@inject HotelService HotelSvc
+@inject BookingService BookingSvc
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider Auth
+
+<h2>Reserva</h2>
+
+@if (hotel is null || ht is null) { <p>Cargando...</p> }
+else
+{
+    <div class="card">
+        <h3>@hotel.Nombre — @ht.Nombre</h3>
+        <label>Check‑in <input type="date" @bind="ciStr" /></label>
+        <label>Check‑out <input type="date" @bind="coStr" /></label>
+        <label>Adultos <input type="number" min="1" @bind="adultos" /></label>
+        <label>Niños <input type="number" min="0" @bind="ninos" /></label>
+
+        <h4>Datos del huésped</h4>
+        <label>Nombre <input @bind="huesped.Nombre" /></label>
+        <label>Apellido <input @bind="huesped.Apellido" /></label>
+        <label>Email <input type="email" @bind="huesped.Email" /></label>
+        <label>Teléfono <input @bind="huesped.Telefono" /></label>
+
+        <button @onclick="Confirmar">Confirmar</button>
+        @if (!string.IsNullOrEmpty(msg)) { <p class="@cls">@msg</p> }
+    </div>
+}
+
+@code {
+    [Parameter] public int hotelId { get; set; }
+    [Parameter] public int habitacionTipoId { get; set; }
+
+    Hotel? hotel;
+    HabitacionTipo? ht;
+    string? ciStr = null;   // <- agregado
+    string? coStr = null;   // <- agregado
+    int adultos = 2, ninos = 0;
+    Huesped huesped = new();
+    string? msg, cls;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        hotel = await HotelSvc.GetAsync(hotelId);
+        ht = hotel?.Habitaciones.FirstOrDefault(x => x.Id == habitacionTipoId);
+    }
+
+    async Task Confirmar()
+    {
+        if (hotel is null || ht is null || string.IsNullOrWhiteSpace(ciStr) || string.IsNullOrWhiteSpace(coStr))
+        { msg = "Completá fechas y datos."; cls = "error"; return; }
+
+        var state = await Auth.GetAuthenticationStateAsync();
+        var usuario = state.User.Identity?.IsAuthenticated == true ? state.User.Identity!.Name! : "invitado";
+
+        var r = new SistemaHotelAloha.Web.Models.Reserva
+        {
+            HotelId = hotel.Id,
+            HabitacionTipoId = ht.Id,
+            CheckIn = DateOnly.Parse(ciStr!),
+            CheckOut = DateOnly.Parse(coStr!),
+            Adultos = adultos,
+            Ninos = ninos,
+            Total = ht.PrecioBasePorNoche * Math.Max(1, (DateOnly.Parse(coStr!).DayNumber - DateOnly.Parse(ciStr!).DayNumber)),
+            Usuario = usuario,
+            Huesped = huesped
+        };
+
+        var id = await BookingSvc.CrearAsync(r);
+        msg = $"Reserva confirmada #{id}"; cls = "success";
+    }
+}

@@ -32,7 +32,6 @@ namespace SistemaHotelAloha.Servicios
             var tipo = GetById(id);
             if (tipo == null)
                 return false;
-
             tipo.Nombre = nombre;
             tipo.Descripcion = descripcion;
             return true;
@@ -43,7 +42,6 @@ namespace SistemaHotelAloha.Servicios
             var tipo = GetById(id);
             if (tipo == null)
                 return false;
-
             tiposHabitacion.Remove(tipo);
             return true;
         }

@@ -1,0 +1,42 @@
+@page "/hotel/{id:int}"
+@using SistemaHotelAloha.Web.Models
+@inject HotelService HotelSvc
+@inject NavigationManager Nav
+
+@if (hotel is null) { <p>Cargando...</p> }
+else
+{
+    <div class="hotel-detail">
+        <h2>@hotel.Nombre</h2>
+        <p class="muted">@hotel.Direccion.Ciudad · ⭐ @hotel.Calificacion</p>
+        <PhotoGrid Fotos="hotel.Fotos" />
+
+        <div class="card">
+            <p>@hotel.DescripcionCorta</p>
+        </div>
+
+        <h3>Habitaciones</h3>
+        @foreach (var ht in hotel.Habitaciones)
+        {
+            <div class="room-card card">
+                <div>
+                    <b>@ht.Nombre</b> · Capacidad @ht.Capacidad
+                </div>
+                <div class="price"> @ht.PrecioBasePorNoche.ToString("C") / noche</div>
+                <button class="btn primary" @onclick="() => Reservar(ht.Id)">Reservar</button>
+            </div>
+        }
+    </div>
+}
+
+@code{
+    [Parameter] public int id { get; set; }
+    Hotel? hotel;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        hotel = await HotelSvc.GetAsync(id);
+    }
+
+    void Reservar(int htId) => Nav.NavigateTo($"/reserva/{id}/{htId}");
+}

@@ -37,8 +37,6 @@ namespace SistemaHotelAloha.Servicios
             var recepcionista = GetById(id);
             if (recepcionista == null)
                 return false;
-
-        
             recepcionista.SetNombre(nombre);
             recepcionista.SetApellido(apellido);
             recepcionista.SetEmail(email);
@@ -59,7 +57,6 @@ namespace SistemaHotelAloha.Servicios
             var recepcionista = GetById(id);
             if (recepcionista == null)
                 return false;
-
             recepcionistas.Remove(recepcionista);
             return true;
         }

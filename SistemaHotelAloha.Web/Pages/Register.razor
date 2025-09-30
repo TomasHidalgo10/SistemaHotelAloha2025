@@ -1,0 +1,39 @@
+@page "/register"
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<h3>Crear cuenta</h3>
+<div class="card">
+    <label>Usuario</label>
+    <input @bind="userName" />
+    <label>Email (opcional)</label>
+    <input @bind="email" />
+    <label>Contraseña</label>
+    <input type="password" @bind="password" />
+    <label>Repetir contraseña</label>
+    <input type="password" @bind="password2" />
+    <button @onclick="OnRegister">Registrarme</button>
+    @if (!string.IsNullOrEmpty(error)) { <p class="error">@error</p> }
+    @if (!string.IsNullOrEmpty(success)) { <p class="success">@success</p> }
+</div>
+
+@code {
+    string userName = string.Empty;
+    string? email = null;     // <- agregado
+    string password = string.Empty;
+    string password2 = string.Empty;
+    string? error;
+    string? success;
+
+    async Task OnRegister()
+    {
+        error = success = null;
+        if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(password))
+        { error = "Completá usuario y contraseña"; return; }
+        if (password != password2) { error = "Las contraseñas no coinciden"; return; }
+
+        var (ok, err) = await Auth.RegisterAsync(userName, email, password);
+        if (ok) { success = "Cuenta creada."; Nav.NavigateTo("/"); }
+        else error = err;
+    }
+}

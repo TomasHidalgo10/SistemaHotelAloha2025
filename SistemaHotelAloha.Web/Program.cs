@@ -1,6 +1,27 @@
+using SistemaHotelAloha.Web.Services;
+using SistemaHotelAloha.Web.Security;
+using SistemaHotelAloha.Web.Data;
+using SistemaHotelAloha.Web.Auth;
+using Microsoft.AspNetCore.Components.Authorization;
 using SistemaHotelAloha.Servicios;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<UserRepository>();
+builder.Services.AddScoped<Db>();
+builder.Services.AddScoped<PasswordHasher>();
+builder.Services.AddScoped<AuthenticationStateProvider, SimpleAuthStateProvider>();
+builder.Services.AddAuthorizationCore();
+
+// --- UI hoteles estilo hoteles.com ---
+builder.Services.AddScoped<HotelService>();
+builder.Services.AddScoped<BookingService>();
+builder.Services.AddSingleton<IHotelRepository, InMemoryHotelRepository>();
+builder.Services.AddSingleton<IBookingRepository, InMemoryBookingRepository>();
+// --- fin UI hoteles ---
+
+builder.Services.AddServerSideBlazor();
+builder.Services.AddRazorPages();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -29,6 +50,9 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.MapBlazorHub();
+app.MapFallbackToPage("/_Host");
 
 app.UseAuthorization();
 

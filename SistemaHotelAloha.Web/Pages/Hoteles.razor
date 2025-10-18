@@ -47,7 +47,7 @@ else
 
     private void Buscar()
     {
-        // Cambiamos la URL (esto dispara OnParametersSetAsync de nuevo)
+        // Cambiamos la URL
         var qs = string.IsNullOrWhiteSpace(Q) ? "" : $"?q={Uri.EscapeDataString(Q)}";
         Nav.NavigateTo($"/hoteles{qs}");
     }
@@ -62,7 +62,7 @@ else
         {
             // Simula tu llamada real (reemplaza por tu servicio)
             await Task.Delay(200); // NUNCA pongas loops sin await aquí
-            result = await BuscarEnServicio(q); // <- tu llamada real
+            result = await BuscarEnServicio(q); 
         }
         finally
         {

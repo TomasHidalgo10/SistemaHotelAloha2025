@@ -40,7 +40,7 @@ namespace SistemaHotelAloha.Servicios
             }
             else
             {
-                return false; //Nos conviene lanzar una excepcion?
+                return false;
             }
         }
         public Cliente GetById(int id) 

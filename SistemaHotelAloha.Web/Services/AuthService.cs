@@ -26,7 +26,7 @@ public class AuthService
         var exists = await _repo.GetByUserNameAsync(userName);
         if (exists != null) return (false, "El usuario ya existe");
 
-        // hash de la contraseña (si tu hasher devuelve (hash, salt), ignoramos el salt)
+        // hash de la contraseña
         var (hashBytes, saltBytes) = _hasher.HashPassword(password);
 
         // 2) Convertimos cada parte a Base64 y las unimos con ':'
@@ -39,14 +39,14 @@ public class AuthService
             id: 0,
             nombre: userName,
             apellido: "",
-            email: email ?? userName,     // si no viene email, usamos userName
+            email: email ?? userName,
             contraseña: contraseñaGuardada,
             telefono: "",
             fechaRegistro: DateTime.UtcNow
         );
 
         // 4) Guardamos
-        var creado = await _repo.CreateAsync(usuario); // si tu repo devuelve bool
+        var creado = await _repo.CreateAsync(usuario);
         if (!creado) return (false, "No se pudo crear el usuario");
 
         // Autologin

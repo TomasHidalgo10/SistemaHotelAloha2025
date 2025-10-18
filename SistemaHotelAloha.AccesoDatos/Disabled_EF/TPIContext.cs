@@ -21,7 +21,7 @@ namespace SistemaHotelAloha.AccesoDatos.EF
 
         internal AlohaContext()
         {
-            // Arranque rápido idéntico a tu ejemplo:
+            // Arranque rápido
             // en producción es preferible Migraciones.
             this.Database.EnsureCreated();
         }
@@ -44,9 +44,9 @@ namespace SistemaHotelAloha.AccesoDatos.EF
         {
             base.OnModelCreating(modelBuilder);
 
-            // =========================
+            
             // USUARIO (TPH con Cliente/Recepcionista)
-            // =========================
+            
             modelBuilder.Entity<Usuario>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -72,9 +72,9 @@ namespace SistemaHotelAloha.AccesoDatos.EF
                 // entity.Property<DateTime?>("FechaNacimiento");
             });
 
-            // =========================
+            
             // TIPO HABITACIÓN
-            // =========================
+            
             modelBuilder.Entity<TipoHabitacion>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -83,15 +83,13 @@ namespace SistemaHotelAloha.AccesoDatos.EF
                 entity.Property(e => e.Descripcion).HasMaxLength(300);
             });
 
-            // =========================
+            
             // HABITACIÓN (N:1 con TipoHabitacion)
-            // =========================
+            
             modelBuilder.Entity<Habitacion>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id).ValueGeneratedOnAdd();
-
-                // Ajustá nombres/longitudes a tu clase:
                 entity.Property<string>("Numero").IsRequired().HasMaxLength(20);
                 entity.Property<decimal>("Precio").HasColumnType("decimal(18,2)");
                 entity.Property<string?>("Estado").HasMaxLength(40);
@@ -102,9 +100,9 @@ namespace SistemaHotelAloha.AccesoDatos.EF
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // =========================
+            
             // SERVICIO ADICIONAL
-            // =========================
+            
             modelBuilder.Entity<ServicioAdicional>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -113,9 +111,9 @@ namespace SistemaHotelAloha.AccesoDatos.EF
                 entity.Property<decimal>("Precio").HasColumnType("decimal(18,2)");
             });
 
-            // =========================
+            
             // RESERVA (N:1 Cliente / N:1 Habitación)
-            // =========================
+            
             modelBuilder.Entity<Reserva>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -136,9 +134,9 @@ namespace SistemaHotelAloha.AccesoDatos.EF
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // =========================
-            // RESERVA SERVICIO (tabla puente N:M)
-            // =========================
+            
+            // RESERVA SERVICIO
+            
             modelBuilder.Entity<ReservaServicio>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -155,9 +153,9 @@ namespace SistemaHotelAloha.AccesoDatos.EF
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // =========================
+           
             // PAGO (N:1 con Reserva)
-            // =========================
+           
             modelBuilder.Entity<Pago>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -173,9 +171,7 @@ namespace SistemaHotelAloha.AccesoDatos.EF
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // =========================
             // TEMPORADA
-            // =========================
             modelBuilder.Entity<Temporada>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -187,8 +183,6 @@ namespace SistemaHotelAloha.AccesoDatos.EF
                 entity.Property<decimal?>("FactorPrecio").HasColumnType("decimal(9,4)");
             });
 
-            // Si querés: índices únicos, seeds, etc.
-            // modelBuilder.Entity<Usuario>().HasIndex(u => u.Email).IsUnique();
         }
     }
 }

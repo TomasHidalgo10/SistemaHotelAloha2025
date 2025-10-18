@@ -5,7 +5,7 @@ using SistemaHotelAloha.AccesoDatos.Infra;
 
 namespace SistemaHotelAloha.AccesoDatos
 {
-    // Repositorio ADO.NET desacoplado del Dominio: usa DataTable y parámetros simples
+    
     public class UsuarioAdoRepository
     {
         public DataTable GetAll()

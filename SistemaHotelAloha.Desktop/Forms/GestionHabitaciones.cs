@@ -17,7 +17,7 @@ namespace SistemaHotelAloha.Desktop.Forms
 
         private void GestionHabitaciones_Load(object sender, EventArgs e)
         {
-            // Seed de ejemplo
+            
             _repo.Create(new Habitacion { Numero = "101", Tipo = "Simple", Estado = "Disponible", PrecioNoche = 35000 });
             _repo.Create(new Habitacion { Numero = "202", Tipo = "Doble", Estado = "Limpieza", PrecioNoche = 55000 });
 

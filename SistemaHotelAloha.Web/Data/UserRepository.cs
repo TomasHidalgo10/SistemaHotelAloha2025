@@ -20,7 +20,7 @@ namespace SistemaHotelAloha.Web.Data;
             return await _db.Usuarios
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u =>
-                    // AJUSTAR estas propiedades según tu modelo:
+                    // AJUSTAR estas propiedades según el modelo:
                     u.Email == userOrEmail
                 );
         }
@@ -29,7 +29,7 @@ namespace SistemaHotelAloha.Web.Data;
         {
             return await _db.Usuarios
                 .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Id == id);    // AJUSTAR si tu PK no es Id
+                .FirstOrDefaultAsync(u => u.Id == id);
         }
 
         public async Task<bool> ExistsByEmailAsync(string email)
@@ -50,7 +50,7 @@ namespace SistemaHotelAloha.Web.Data;
         // (Opcional) Actualizar hash de password
         public async Task<bool> UpdatePasswordAsync(int userId, string newPasswordHash)
         {
-            var u = await _db.Usuarios.FirstOrDefaultAsync(x => x.Id == userId); // AJUSTAR PK si no es Id
+            var u = await _db.Usuarios.FirstOrDefaultAsync(x => x.Id == userId);
             if (u is null) return false;
 
             // AJUSTAR propiedad de password según tu Usuario:

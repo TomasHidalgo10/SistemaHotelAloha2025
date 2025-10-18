@@ -1,5 +1,3 @@
-// Repositorios EF con GetByCriteria implementado con LINQ (sin TODOs ni SQL manual).
-// Patrón compatible con tu PersonaRepository, pero evitando mapeo manual de constructores.
 using System;
 using System.Collections.Generic;
 using System.Linq;

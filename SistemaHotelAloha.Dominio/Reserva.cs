@@ -119,6 +119,6 @@ namespace SistemaHotelAloha.Dominio
             return Habitacion.precio += (totalServicios);
         }
     
-       //necesitariamos un cofirmarReserva?
+      
     }
 }

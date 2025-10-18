@@ -45,7 +45,6 @@ namespace SistemaHotelAloha.Web.Controllers
                 if (string.IsNullOrWhiteSpace(clienteDto.Nacionalidad)) return BadRequest("La nacionalidad es obligatoria.");
 
                 // Llamada al servicio
-                // Si _ClienteService puede ser null, usamos ?? false para evitar el bool? 
                 var actualizado = _ClienteService?.UpdateCliente(
                     id: id,
                     nombre: clienteDto.Nombre!,

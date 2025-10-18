@@ -4,9 +4,7 @@ namespace SistemaHotelAloha.Desktop.Forms
 {
     partial class GestionUsuarios
     {
-        /// <summary>
-        ///  Required designer variable.
-        /// </summary>
+      
         private System.ComponentModel.IContainer components = null;
 
         protected override void Dispose(bool disposing)

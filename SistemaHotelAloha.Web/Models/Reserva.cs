@@ -18,6 +18,6 @@ public class Reserva
     public int Adultos { get; set; }
     public int Ninos { get; set; }
     public decimal Total { get; set; }
-    public string Usuario { get; set; } = ""; // UserName
+    public string Usuario { get; set; } = ""; 
     public Huesped Huesped { get; set; } = new();
 }

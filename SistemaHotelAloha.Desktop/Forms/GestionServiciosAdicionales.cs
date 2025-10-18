@@ -17,7 +17,7 @@ namespace SistemaHotelAloha.Desktop.Forms
 
         private void GestionServiciosAdicionales_Load(object sender, EventArgs e)
         {
-            // Seed de ejemplo
+            
             _repo.Create(new ServicioAdicional { Nombre = "Spa", Precio = 15000 });
             _repo.Create(new ServicioAdicional { Nombre = "Traslado", Precio = 8000 });
 

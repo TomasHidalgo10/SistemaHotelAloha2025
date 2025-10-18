@@ -17,7 +17,7 @@ namespace SistemaHotelAloha.Desktop.Forms
 
         private void GestionUsuarios_Load(object sender, EventArgs e)
         {
-            // Seed opcional con un par de filas
+            
             _repo.Create(new Usuario { Nombre = "Admin", Email = "admin@aloha.com", Rol = "Administrador" });
             _repo.Create(new Usuario { Nombre = "Recep", Email = "recepcion@aloha.com", Rol = "Recepción" });
 

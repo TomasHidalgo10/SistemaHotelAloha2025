@@ -8,3 +8,23 @@ input { padding:8px; width:100%; max-width:360px; }
 button { padding:8px 14px; margin-top:12px; cursor:pointer; }
 .error { color:#b00020; }
 .success { color:#0a7c2e; }
+.topbar {
+    background-color: #ffffff; /* Fondo blanco */
+    border-bottom: 1px solid #ccc;
+    padding: 10px 20px;
+}
+
+    /* Enlaces del menú */
+    .topbar a {
+        color: #222 !important; /* Texto oscuro visible */
+        text-decoration: none;
+        font-weight: 600;
+        margin-right: 15px;
+        transition: color 0.3s ease;
+    }
+
+        /* Efecto al pasar el mouse */
+        .topbar a:hover {
+            color: #007bff !important; /* Azul al pasar el mouse */
+            text-decoration: underline;
+        }

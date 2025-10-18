@@ -52,5 +52,9 @@ namespace SistemaHotelAloha.Servicios
             return ClienteInMemory.Clientes.ToList();
         }
 
+        public bool UpdateCliente(int id, string nombre, string apellido, string email, string contraseña, string telefono, string dni, object fechaNacimiento, string nacionalidad)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

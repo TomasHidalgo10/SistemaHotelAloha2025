@@ -1,5 +1,6 @@
 @page "/mis-reservas"
-@inject BookingService BookingSvc
+
+@inject SistemaHotelAloha.Web.Services.BookingService BookingSvc
 @inject AuthenticationStateProvider Auth
 
 <h2>Mis reservas</h2>
@@ -17,12 +18,17 @@ else
     }
 }
 
-@code{
+@code {
     List<SistemaHotelAloha.Web.Models.Reserva>? items;
+
     protected override async Task OnInitializedAsync()
     {
         var state = await Auth.GetAuthenticationStateAsync();
-        var user = state.User.Identity?.IsAuthenticated == true ? state.User.Identity!.Name! : "invitado";
-        items = await BookingSvc.MiasAsync(user);
+        var user = state.User.Identity?.IsAuthenticated == true
+                    ? state.User.Identity!.Name!
+                    : "invitado";
+
+        items = await BookingSvc.MiasAsync(user);   // <-- usar la instancia BookingSvc
     }
+}
 }

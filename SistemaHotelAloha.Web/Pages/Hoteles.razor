@@ -1,128 +1,108 @@
 @page "/hoteles"
-@using SistemaHotelAloha.Web.Models
-@using SistemaHotelAloha.Web.Services
-@using SistemaHotelAloha.Web.Components
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Routing
 @inject NavigationManager Nav
-@inject HotelService HotelSvc
 
-<div class="results-layout">
-  <aside class="filters-wrap">
-    <Filters OnChange="OnFiltros" />
-  </aside>
-  <section class="results-wrap">
-    <div class="results-head">
-      <h2>Resultados</h2>
-      @if (total > 0) { <span class="muted">@total resultados</span> }
-    </div>
+<h3>Buscar hoteles</h3>
 
-    @if (loading)
-    {
-        <div class="skeleton-grid">
-            @for (int i = 0; i < 8; i++)
-            {
-                <div class="skeleton-card"></div>
-            }
-        </div>
-    }
-    else if (hoteles is null || hoteles.Count == 0)
-    {
-        <div class="empty">
-            <h3>Sin resultados</h3>
-            <p class="muted">Proba cambiar filtros o fechas.</p>
-        </div>
-    }
-    else
-    {
-        <!-- Render de tarjetas -->
-        @foreach (var h in hoteles)
+<input @bind="Q" placeholder="Ciudad o nombre" />
+<button type="button" @onclick="Buscar">Buscar</button>
+
+@if (loading)
+{
+    <p>Cargando...</p>
+}
+else if (result is null)
+{
+
+    <p>Sin resultados.</p>
+}
+else
+{
+    <ul>
+        @foreach (var h in result)
         {
-            <HotelCard Hotel="h" />
+            <li>
+                <img src="@GetImg(h)" alt="@h.Nombre" style="max-width:180px" />
+                <div>@h.Nombre</div>
+            </li>
         }
-
-        <!-- Fallback de debug (plain HTML) por si hubiera algún problema con el componente -->
-        <div class="debug-fallback">
-            @foreach (var h in hoteles)
-            {
-                <div class="card" style="margin:8px 0; border:1px dashed #2c3b4a;">
-                    <div><b>@h.Nombre</b> — @h.Direccion.Ciudad · ⭐ @h.Calificacion</div>
-                    <div>Desde @h.Habitaciones.Min(x => x.PrecioBasePorNoche).ToString("C")</div>
-                </div>
-            }
-        </div>
-
-        <nav class="pager">
-            <button class="btn" disabled="@(pagina<=1)" @onclick="Prev">«</button>
-            <span>Página @pagina de @totalPaginas</span>
-            <button class="btn" disabled="@(pagina>=totalPaginas)" @onclick="Next">»</button>
-        </nav>
-    }
-  </section>
-</div>
+    </ul>
+}
 
 @code {
-    // query state
-    string destino = "";
-    DateOnly? ci, co;
-    int ad = 2, ni = 0;
-    string[]? amen;
-    decimal? pmin, pmax;
-    string? orden;
+    // -------------- Estado de la página --------------
+    [SupplyParameterFromQuery(Name = "q")]
+    public string? Q { get; set; }
 
-    int total = 0;
-    int pagina = 1, tam = 10, totalPaginas = 1;
-    bool loading = true;
+    bool loading;
+    List<Hotel>? result;
 
-    List<Hotel> hoteles = new();
-
-    System.Timers.Timer? _debounce;
-    System.Threading.CancellationTokenSource? _cts;
-
-    protected override async Task OnInitializedAsync()
+    // -------------- Ciclo de vida seguro --------------
+    protected override async Task OnParametersSetAsync()
     {
-        var uri = Nav.ToAbsoluteUri(Nav.Uri);
-        var q = System.Web.HttpUtility.ParseQueryString(uri.Query);
-        destino = q.Get("destino") ?? "";
-        if (DateOnly.TryParse(q.Get("ci"), out var dci)) ci = dci;
-        if (DateOnly.TryParse(q.Get("co"), out var dco)) co = dco;
-        ad = int.TryParse(q.Get("ad"), out var _ad) ? _ad : 2;
-        ni = int.TryParse(q.Get("ni"), out var _ni) ? _ni : 0;
-
-        await Buscar(true);
+        // Se ejecuta al entrar y cuando cambie ?q= de la URL
+        await DoSearch(Q);
     }
 
-    async Task Buscar(bool first = false)
+    private void Buscar()
+    {
+        // Cambiamos la URL (esto dispara OnParametersSetAsync de nuevo)
+        var qs = string.IsNullOrWhiteSpace(Q) ? "" : $"?q={Uri.EscapeDataString(Q)}";
+        Nav.NavigateTo($"/hoteles{qs}");
+    }
+
+    private async Task DoSearch(string? q)
     {
         loading = true;
-        StateHasChanged();
+        result = null;
+        StateHasChanged(); // pinta "Cargando..."
 
-        _cts?.Cancel();
-        _cts = new System.Threading.CancellationTokenSource();
-
-        var req = new BusquedaRequest(destino, ci, co, ad, ni, pagina, tam, orden, amen, pmin, pmax);
-        var r = await HotelSvc.BuscarAsync(req);
-        total = r.Total;
-        hoteles = r.Hoteles;
-        totalPaginas = Math.Max(1, (int)Math.Ceiling(total / (double)tam));
-        loading = false;
-        await InvokeAsync(StateHasChanged);
+        try
+        {
+            // Simula tu llamada real (reemplaza por tu servicio)
+            await Task.Delay(200); // NUNCA pongas loops sin await aquí
+            result = await BuscarEnServicio(q); // <- tu llamada real
+        }
+        finally
+        {
+            loading = false;
+        }
     }
 
-    private Task OnFiltros((string[]? amen, decimal? min, decimal? max, string? orden) f)
+    // ----------------- Helpers -----------------
+    private Task<List<Hotel>> BuscarEnServicio(string? q)
     {
-        this.amen = f.amen;
-        this.pmin = f.min;
-        this.pmax = f.max;
-        this.orden = f.orden;
-        pagina = 1;
-
-        _debounce?.Stop();
-        _debounce = new System.Timers.Timer(200) { AutoReset = false };
-        _debounce.Elapsed += async (_, __) => await Buscar();
-        _debounce.Start();
-
-        return Task.CompletedTask; // <- elimina CS1998
+        // Reemplazá por HotelService.BuscarAsync(q) / lo que uses
+        q = q?.Trim().ToLowerInvariant();
+        var data = MockData();
+        var fil = string.IsNullOrWhiteSpace(q) ? data : data.Where(h => h.Nombre.ToLower().Contains(q)).ToList();
+        return Task.FromResult(fil);
     }
 
-    Task Prev() { pagina--; return Buscar(); }
-    Task Next() { pagina++; return Buscar(); }
+    private string GetImg(Hotel h)
+    {
+        // 1) Si tenés ruta relativa guardada en BD (ej: "images/h1.jpg"):
+        if (!string.IsNullOrWhiteSpace(h.FotoPath)) return "/" + h.FotoPath;
+
+        // 2) Si tenés bytes:
+        if (h.FotoBytes is not null) return $"data:image/jpeg;base64,{Convert.ToBase64String(h.FotoBytes)}";
+
+        // 3) Fallback:
+        return "/images/placeholder.jpg";
+    }
+
+    // ----------------- Modelito demo -----------------
+    private static List<Hotel> MockData() => new()
+    {
+        new Hotel { Nombre = "Aloha Centro", FotoPath = "images/h1.jpg" },
+        new Hotel { Nombre = "Aloha Playa", FotoPath = "images/h2.jpg" },
+    };
+
+    public class Hotel
+    {
+        public string Nombre { get; set; } = "";
+        public string? FotoPath { get; set; }
+        public byte[]? FotoBytes { get; set; }
+    }
 }

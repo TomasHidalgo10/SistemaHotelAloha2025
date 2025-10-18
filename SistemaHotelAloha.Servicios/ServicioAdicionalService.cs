@@ -48,9 +48,9 @@ namespace SistemaHotelAloha.Servicios
             return true;
         }
 
-        internal ServicioAdicional GetOne(int servicioAdicionalId)
+        internal ServicioAdicional? GetOne(int servicioAdicionalId)
         {
-            return serviciosAdicionales.FirstOrDefault(s => s.Id == servicioAdicionalId);
+            return serviciosAdicionales?.FirstOrDefault(s => s.Id == servicioAdicionalId);
         }
     }
 }

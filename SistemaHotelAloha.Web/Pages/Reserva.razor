@@ -1,10 +1,8 @@
 @page "/reserva/{hotelId:int}/{habitacionTipoId:int}"
 @using SistemaHotelAloha.Web.Models
-@inject HotelService HotelSvc
-@inject BookingService BookingSvc
-@inject NavigationManager Nav
+@inject SistemaHotelAloha.Web.Services.HotelService HotelSvc
+@inject SistemaHotelAloha.Web.Services.BookingService BookingSvc
 @inject AuthenticationStateProvider Auth
-
 <h2>Reserva</h2>
 
 @if (hotel is null || ht is null) { <p>Cargando...</p> }
@@ -29,20 +27,20 @@ else
 }
 
 @code {
-    [Parameter] public int hotelId { get; set; }
-    [Parameter] public int habitacionTipoId { get; set; }
-
     Hotel? hotel;
     HabitacionTipo? ht;
-    string? ciStr = null;   // <- agregado
-    string? coStr = null;   // <- agregado
+    string? ciStr = null;
+    string? coStr = null;
     int adultos = 2, ninos = 0;
     Huesped huesped = new();
     string? msg, cls;
 
+    [Parameter] public int hotelId { get; set; }
+    [Parameter] public int habitacionTipoId { get; set; }
+
     protected override async Task OnParametersSetAsync()
     {
-        hotel = await HotelSvc.GetAsync(hotelId);
+        hotel = await HotelSvc.GetAsync(hotelId);             // <-- HotelSvc aquí
         ht = hotel?.Habitaciones.FirstOrDefault(x => x.Id == habitacionTipoId);
     }
 
@@ -52,7 +50,9 @@ else
         { msg = "Completá fechas y datos."; cls = "error"; return; }
 
         var state = await Auth.GetAuthenticationStateAsync();
-        var usuario = state.User.Identity?.IsAuthenticated == true ? state.User.Identity!.Name! : "invitado";
+        var usuario = state.User.Identity?.IsAuthenticated == true
+                        ? state.User.Identity!.Name!
+                        : "invitado";
 
         var r = new SistemaHotelAloha.Web.Models.Reserva
         {
@@ -67,7 +67,8 @@ else
             Huesped = huesped
         };
 
-        var id = await BookingSvc.CrearAsync(r);
-        msg = $"Reserva confirmada #{id}"; cls = "success";
+        var id = await BookingSvc.CrearAsync(r);              // <-- BookingSvc aquí (instancia, NO la clase)
+        msg = $"Reserva confirmada #{id}";
+        cls = "success";
     }
 }

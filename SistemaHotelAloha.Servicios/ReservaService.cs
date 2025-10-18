@@ -19,9 +19,9 @@ namespace SistemaHotelAloha.Servicios
             return _reservas;
         }
 
-        public Reserva GetOne(int id)
+        public Reserva? GetOne(int id)
         {
-            return _reservas.FirstOrDefault(r => r.Id == id);
+            return _reservas.FirstOrDefault(r => r.Id == id) ;
         }
 
         public Reserva Create(Reserva reserva)
@@ -38,7 +38,7 @@ namespace SistemaHotelAloha.Servicios
             return reserva;
         }
 
-        public Reserva Update(Reserva reserva)
+        public Reserva? Update(Reserva reserva)
         {
             if (reserva == null)
             {

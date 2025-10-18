@@ -31,12 +31,12 @@ namespace SistemaHotelAloha.Desktop.Forms
             if (string.IsNullOrWhiteSpace(txtNombre.Text) || string.IsNullOrWhiteSpace(txtPrecio.Text))
             {
                 MessageBox.Show("Completá Nombre y Precio.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return null ?? false;
+                return null;
             }
             if (!decimal.TryParse(txtPrecio.Text, out var precio))
             {
                 MessageBox.Show("Precio inválido.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return null ?? false;
+                return null;
             }
             var s = new ServicioAdicional
             {
@@ -45,7 +45,7 @@ namespace SistemaHotelAloha.Desktop.Forms
             };
             if (includeId && int.TryParse(txtId.Text, out var id))
                 s.Id = id;
-            return s ?? false;
+            return s;
         }
 
         private void dgvServicios_SelectionChanged(object? sender, EventArgs e)

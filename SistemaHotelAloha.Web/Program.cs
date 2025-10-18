@@ -4,38 +4,32 @@ using SistemaHotelAloha.Web.Data;
 using SistemaHotelAloha.Web.Auth;
 using Microsoft.AspNetCore.Components.Authorization;
 using SistemaHotelAloha.Servicios;
+using Microsoft.EntityFrameworkCore;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
+
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<UserRepository>();
-builder.Services.AddScoped<Db>();
-builder.Services.AddScoped<PasswordHasher>();
-builder.Services.AddScoped<AuthenticationStateProvider, SimpleAuthStateProvider>();
-builder.Services.AddAuthorizationCore();
 
-// --- UI hoteles estilo hoteles.com ---
-builder.Services.AddScoped<HotelService>();
-builder.Services.AddScoped<BookingService>();
+// -------------------- EF Core MySQL --------------------
+var conn = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<AlohaDbContext>(options =>
+    options.UseMySql(conn, ServerVersion.AutoDetect(conn)));
+
+builder.Services.AddScoped<UserRepository>();
+
+// -------------------- Blazor + MVC --------------------
+builder.Services.AddRazorPages();
+builder.Services.AddServerSideBlazor();
+builder.Services.AddControllersWithViews();
+builder.Services.AddAuthorizationCore();
+builder.Services.AddScoped<AuthenticationStateProvider, SimpleAuthStateProvider>();
 builder.Services.AddSingleton<IHotelRepository, InMemoryHotelRepository>();
 builder.Services.AddSingleton<IBookingRepository, InMemoryBookingRepository>();
-// --- fin UI hoteles ---
+builder.Services.AddScoped<HotelService>();
+builder.Services.AddScoped<BookingService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<PasswordHasher>();
 
-builder.Services.AddServerSideBlazor();
-builder.Services.AddRazorPages();
-
-// Add services to the container.
-builder.Services.AddControllersWithViews();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-builder.Services.AddSingleton<ClienteService>();
-builder.Services.AddSingleton<HabitacionService>();
-builder.Services.AddSingleton<ReservaService>();
-builder.Services.AddSingleton<PagoService>();
-builder.Services.AddSingleton<RecepcionistaService>();
-builder.Services.AddSingleton<ServicioAdicionalService>();
-builder.Services.AddSingleton<TipoHabitacionService>();
-builder.Services.AddSingleton<ReservaServicioService>();
 
 var app = builder.Build();
 
@@ -48,24 +42,13 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
-app.MapBlazorHub();
-app.MapFallbackToPage("/_Host");
 
 app.UseAuthorization();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
 app.MapControllers();
-
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapBlazorHub();
+app.MapFallbackToPage("/_Host");
 
 app.Run();
+

@@ -1,23 +1,21 @@
+@using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Authorization
 @inherits LayoutComponentBase
 
 <div class="topbar">
     <div class="left">
-        <a href="/">ALOHA</a>
-        <a href="/hoteles">Buscar</a>
-        <a href="/mis-reservas">Mis reservas</a>
-        <a href="/login">Login</a>
-        <a href="/register">Registro</a>
-        <a href="/logout">Salir</a>
+        <NavLink href="/" Match="NavLinkMatch.All">ALOHA</NavLink>
+        <NavLink href="/hoteles">Buscar</NavLink>
+        <NavLink href="/mis-reservas">Mis reservas</NavLink>
+        <NavLink href="/login">Login</NavLink>
+        <NavLink href="/register">Registro</NavLink>
+        <NavLink href="/logout">Salir</NavLink>
     </div>
+
     <div class="right">
         <AuthorizeView>
-            <Authorized>
-                Hola, @context.User.Identity?.Name
-            </Authorized>
-            <NotAuthorized>
-                Invitado
-            </NotAuthorized>
+            <Authorized>Hola, @context.User.Identity?.Name</Authorized>
+            <NotAuthorized>Invitado</NotAuthorized>
         </AuthorizeView>
     </div>
 </div>

@@ -11,7 +11,7 @@ public class AlohaDbContext : DbContext
 {
     public AlohaDbContext(DbContextOptions<AlohaDbContext> options) : base(options) { }
 
-    // Tablas (DbSet) que correspondan a las entidades
+    // Tablas (DbSet) que corresponden a las entidades
     public DbSet<Cliente> Clientes { get; set; }
     public DbSet<Habitacion> Habitaciones { get; set; }
     public DbSet<Reserva> Reservas { get; set; }

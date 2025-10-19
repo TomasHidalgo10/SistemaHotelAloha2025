@@ -33,7 +33,7 @@ namespace SistemaHotelAloha.Web.Controllers
             [HttpPut("{id}")]
             public IActionResult ActualizarCliente(int id, [FromBody] ClienteUpdateDto clienteDto)
             {
-                // Validaciones básicas para evitar nulls y errores de tipo
+                // Validaciones básicas 
                 if (id <= 0) return BadRequest("Id inválido.");
                 if (clienteDto is null) return BadRequest("Body vacío.");
                 if (string.IsNullOrWhiteSpace(clienteDto.Nombre)) return BadRequest("El nombre es obligatorio.");
@@ -57,7 +57,7 @@ namespace SistemaHotelAloha.Web.Controllers
                     nacionalidad: clienteDto.Nacionalidad!
                 ) ?? false;
 
-                // Verificamos el resultado
+                // Verificación del resultado
                 if (!actualizado) return NotFound();
 
                 return NoContent();

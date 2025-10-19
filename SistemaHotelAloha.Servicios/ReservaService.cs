@@ -51,18 +51,18 @@ namespace SistemaHotelAloha.Servicios
                 return null;
             }
 
-            // Actualizar las propiedades de la reserva existente
+            // Actualiza las propiedades de la reserva existente
             existingReserva.SetFechaCreacion(reserva.FechaCreacion);
             existingReserva.SetFechaCheckIn(reserva.FechaCheckIn);
             existingReserva.SetFechaCheckOut(reserva.FechaCheckOut);
             existingReserva.SetEstado(reserva.Estado);
             existingReserva.SetMetodoPago(reserva.MetodoPago);
 
-            // Actualizar las relaciones
+            // Actualiza las relaciones
             existingReserva.Habitacion = reserva.Habitacion;
             existingReserva.Servicios = reserva.Servicios;
 
-            // Recalcular el total después de las actualizaciones
+            // Recalcula el total después de las actualizaciones
             existingReserva.SetTotal((float)existingReserva.CalcularTotal());
 
             return existingReserva;

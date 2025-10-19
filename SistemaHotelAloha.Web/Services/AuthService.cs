@@ -22,7 +22,7 @@ public class AuthService
     // Registro
     public async Task<(bool ok, string? error)> RegisterAsync(string userName, string? email, string password)
     {
-        // ¿ya existe?
+        // Validacion
         var exists = await _repo.GetByUserNameAsync(userName);
         if (exists != null) return (false, "El usuario ya existe");
 
@@ -34,7 +34,7 @@ public class AuthService
         var saltBase64 = Convert.ToBase64String(saltBytes);
         var contraseñaGuardada = $"{hashBase64}:{saltBase64}";  // <-- formato "hash:salt"
 
-        // 3) Creamos el usuario con ese valor en Contraseña
+        // 3) Crea el usuario con ese valor en Contraseña
         var usuario = new Usuario(
             id: 0,
             nombre: userName,
@@ -60,14 +60,14 @@ public class AuthService
         var u = await _repo.GetByUserNameAsync(userName);
         if (u is null) return (false, "Usuario o contraseña inválidos");
 
-        // 1) Extraemos hash y salt almacenados en formato "hashBase64:saltBase64"
+        // 1) Extrae hash y salt almacenados en formato "hashBase64:saltBase64"
         var partes = (u.Contraseña ?? "").Split(':');
         if (partes.Length != 2) return (false, "Formato de contraseña inválido");
 
         var expectedHash = Convert.FromBase64String(partes[0]);
         var salt = Convert.FromBase64String(partes[1]);
 
-        // 2) Verificamos con los tres parámetros que requiere tu hasher
+        // 2) Verifica con los tres parámetros que requiere tu hasher
         var ok = _hasher.Verify(password, salt, expectedHash);
         if (!ok) return (false, "Usuario o contraseña inválidos");
         _auth.SignIn(u.Email ?? userName);

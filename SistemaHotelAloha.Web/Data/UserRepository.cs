@@ -14,15 +14,12 @@ namespace SistemaHotelAloha.Web.Data;
             _db = db;
         }
 
-        // Buscar por username o email (lo que te llegue desde el login)
+        // Buscar por username o email 
         public async Task<Usuario?> GetByUserNameAsync(string userOrEmail)
         {
             return await _db.Usuarios
                 .AsNoTracking()
-                .FirstOrDefaultAsync(u =>
-                    // AJUSTAR estas propiedades según el modelo:
-                    u.Email == userOrEmail
-                );
+                .FirstOrDefaultAsync(u => u.Email == userOrEmail);
         }
 
         public async Task<Usuario?> GetByIdAsync(int id)
@@ -47,17 +44,11 @@ namespace SistemaHotelAloha.Web.Data;
             return true;
         }
 
-        // (Opcional) Actualizar hash de password
+        // Actualiza hash de password
         public async Task<bool> UpdatePasswordAsync(int userId, string newPasswordHash)
         {
             var u = await _db.Usuarios.FirstOrDefaultAsync(x => x.Id == userId);
-            if (u is null) return false;
-
-            // AJUSTAR propiedad de password según tu Usuario:
-            // u.PasswordHash = newPasswordHash;
-            // o si tu propiedad es "Contrasenia" / "Contraseña" / "Password":
-            // u.Contrasenia = newPasswordHash;
-
+            if (u is null) return false;  
             await _db.SaveChangesAsync();
             return true;
         }

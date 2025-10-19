@@ -7,7 +7,7 @@ namespace SistemaHotelAloha.AccesoDatos.EF
 {
     internal class AlohaContext : DbContext
     {
-        // DbSets del dominio ALOHA
+        // DbSets del dominio 
         public DbSet<Usuario> Usuarios { get; set; } = null!;
         public DbSet<Cliente> Clientes { get; set; } = null!;
         public DbSet<Recepcionista> Recepcionistas { get; set; } = null!;
@@ -22,7 +22,6 @@ namespace SistemaHotelAloha.AccesoDatos.EF
         internal AlohaContext()
         {
             // Arranque rápido
-            // en producción es preferible Migraciones.
             this.Database.EnsureCreated();
         }
 
@@ -63,13 +62,11 @@ namespace SistemaHotelAloha.AccesoDatos.EF
                       .HasValue<Recepcionista>("Recepcionista");
             });
 
-            // Campos específicos de Cliente (si existen en tu clase)
+            // Campos de Cliente 
             modelBuilder.Entity<Cliente>(entity =>
             {
-                // ejemplos, ajustá a tus propiedades reales:
                 entity.Property<string?>("Dni").HasMaxLength(20);
                 entity.Property<string?>("Nacionalidad").HasMaxLength(60);
-                // entity.Property<DateTime?>("FechaNacimiento");
             });
 
             

@@ -20,7 +20,7 @@ namespace SistemaHotelAloha.Servicios
 
         public ReservaServicio AgregarServicioAReserva(int reservaId, int servicioAdicionalId, int cantidad)
         {
-            // 1. Encontrar la reserva y el servicio adicional por sus IDs.
+            // 1. Encontra la reserva y el servicio adicional por sus IDs.
             var reserva = _reservaService.GetOne(reservaId);
             if (reserva == null)
             {
@@ -33,16 +33,16 @@ namespace SistemaHotelAloha.Servicios
                 throw new KeyNotFoundException($"No se encontró el servicio adicional con ID {servicioAdicionalId}.");
             }
 
-            // 2. Crear una nueva instancia de ReservaServicio
+            // 2. Crea una nueva instancia de ReservaServicio
             var nuevoReservaServicio = new ReservaServicio();
             nuevoReservaServicio.SetCantidad(cantidad);
             nuevoReservaServicio.SetServicio(servicioAdicional);
 
-            // 3. Calcular el subtotal y aplicarlo.
+            // 3. Calcula el subtotal y aplicarlo.
             float subtotalCalculado = cantidad * servicioAdicional.Precio;
             nuevoReservaServicio.SetSubtotal(subtotalCalculado);
 
-            // 4. Agregar la instancia de ReservaServicio a la lista de servicios de la reserva.
+            // 4. Agrega la instancia de ReservaServicio a la lista de servicios de la reserva.
             reserva.AgregarServicio(nuevoReservaServicio);
 
             Console.WriteLine($"Se agregó el servicio '{servicioAdicional.Nombre}' a la reserva con ID {reserva.Id}.");

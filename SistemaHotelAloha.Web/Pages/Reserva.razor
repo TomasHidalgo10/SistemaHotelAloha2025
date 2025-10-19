@@ -40,7 +40,7 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
-        hotel = await HotelSvc.GetAsync(hotelId);             // <-- HotelSvc aquí
+        hotel = await HotelSvc.GetAsync(hotelId);             
         ht = hotel?.Habitaciones.FirstOrDefault(x => x.Id == habitacionTipoId);
     }
 
@@ -67,7 +67,7 @@ else
             Huesped = huesped
         };
 
-        var id = await BookingSvc.CrearAsync(r);              // <-- BookingSvc aquí (instancia, NO la clase)
+        var id = await BookingSvc.CrearAsync(r);              
         msg = $"Reserva confirmada #{id}";
         cls = "success";
     }

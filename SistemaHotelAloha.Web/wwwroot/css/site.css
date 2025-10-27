@@ -1,30 +1,297 @@
-body { font-family: system-ui, Arial, sans-serif; margin:0; }
-.topbar { display:flex; justify-content:space-between; align-items:center; padding:10px 16px; border-bottom:1px solid #ddd; position:sticky; top:0; background:#fff; }
-.topbar a { margin-right:12px; text-decoration:none; }
-.content { padding: 20px; max-width: 900px; margin: 0 auto; }
-.card { border:1px solid #e5e5e5; border-radius:10px; padding:16px; margin:10px 0; }
-label { display:block; margin-top:10px; }
-input { padding:8px; width:100%; max-width:360px; }
-button { padding:8px 14px; margin-top:12px; cursor:pointer; }
-.error { color:#b00020; }
-.success { color:#0a7c2e; }
-.topbar {
-    background-color: #ffffff; /* Fondo blanco */
-    border-bottom: 1px solid #ccc;
-    padding: 10px 20px;
+:root {
+    /* Paleta principal */
+    --color-bg: #0b1524;
+    --color-panel: #111c2e;
+    --color-text: #e9eef7;
+    --color-muted: #a9b4c7;
+    --color-primary-start: #6e8efb;
+    --color-primary-end: #a777e3;
+    --color-success: #21c997;
+    --radius: 14px;
 }
 
-    /* Enlaces del menú */
-    .topbar a {
-        color: #222 !important; /* Texto oscuro visible */
-        text-decoration: none;
-        font-weight: 600;
-        margin-right: 15px;
-        transition: color 0.3s ease;
+/* =======================
+   Base general
+   ======================= */
+html, body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+    min-height: 100vh;
+}
+
+a, .nav-link {
+    color: var(--color-primary-end);
+    text-decoration: none;
+}
+
+    a:hover, .nav-link:hover {
+        color: var(--color-primary-start);
+        text-decoration: underline;
     }
 
-        /* Efecto al pasar el mouse */
-        .topbar a:hover {
-            color: #007bff !important; /* Azul al pasar el mouse */
-            text-decoration: underline;
-        }
+/* =======================
+   Navbar
+   ======================= */
+.bg-gradient-primary {
+    background: linear-gradient(90deg, var(--color-primary-start), var(--color-primary-end));
+}
+
+.navbar {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: 1px;
+    font-size: 1.3rem;
+}
+
+.navbar-text {
+    color: var(--color-text);
+}
+
+.nav-link.active {
+    font-weight: 600;
+    color: #fff !important;
+}
+
+/* =======================
+   Cards y paneles
+   ======================= */
+.card {
+    background-color: var(--color-panel);
+    border: none;
+    border-radius: var(--radius);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+    color: var(--color-text);
+}
+
+    .card h3, .card h5 {
+        color: var(--color-text);
+    }
+
+/* =======================
+   Formularios
+   ======================= */
+.form-control, .form-select {
+    background: #0e1a2b;
+    color: var(--color-text);
+    border: 1px solid #1f2b40;
+    border-radius: 10px;
+    padding: 0.6rem 0.9rem;
+}
+
+    .form-control:focus {
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(167, 119, 227, 0.25);
+        border-color: var(--color-primary-end);
+    }
+
+label {
+    font-weight: 500;
+    color: var(--color-muted);
+}
+
+/* =======================
+   Botones
+   ======================= */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: 0.2s ease-in-out;
+}
+
+    .btn:hover {
+        transform: translateY(-1px);
+        opacity: 0.95;
+    }
+
+.btn-primary {
+    background: linear-gradient(90deg, var(--color-primary-start), var(--color-primary-end));
+    border: none;
+    color: #fff;
+}
+
+    .btn-primary:hover {
+        background: linear-gradient(90deg, var(--color-primary-end), var(--color-primary-start));
+    }
+
+.btn-success {
+    background-color: var(--color-success);
+    border: none;
+    color: #fff;
+}
+
+.btn-outline-light {
+    border-color: var(--color-text);
+    color: var(--color-text);
+}
+
+    .btn-outline-light:hover {
+        background-color: var(--color-text);
+        color: var(--color-bg);
+    }
+
+/* =======================
+   Alertas y validación
+   ======================= */
+.alert {
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    font-weight: 500;
+}
+
+.validation-message, .text-danger {
+    color: #ff6b6b !important;
+}
+
+/* =======================
+   Listas / elementos
+   ======================= */
+.list-group-item {
+    background-color: transparent;
+    color: var(--color-text);
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+    .list-group-item:last-child {
+        border-bottom: none;
+    }
+
+/* =======================
+   Hero / sección principal
+   ======================= */
+.hero {
+    background: linear-gradient(120deg, var(--color-primary-start), var(--color-primary-end));
+    padding: 4rem 2rem;
+    border-radius: var(--radius);
+    color: #fff;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+    .hero h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+
+    .hero p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+
+/* =======================
+   Footer
+   ======================= */
+footer {
+    background: #0c1628;
+    color: var(--color-muted);
+    text-align: center;
+    padding: 1rem;
+    margin-top: 2rem;
+    border-top: 1px solid #1a263d;
+    font-size: 0.9rem;
+}
+
+/* =======================
+   Utilidades
+   ======================= */
+.text-muted {
+    color: var(--color-muted) !important;
+}
+
+.w-100 {
+    width: 100% !important;
+}
+
+.text-center {
+    text-align: center !important;
+}
+
+.mt-3 {
+    margin-top: 1rem !important;
+}
+
+.mb-3 {
+    margin-bottom: 1rem !important;
+}
+
+.py-4 {
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+}
+.hero-aloha {
+    position: relative;
+    border-radius: var(--radius);
+    padding: 3rem 1.75rem;
+    background: radial-gradient(1200px 300px at -10% -40%, rgba(110,142,251,.25), transparent), radial-gradient(900px 260px at 110% -20%, rgba(167,119,227,.20), transparent), linear-gradient(160deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    border: 1px solid rgba(255,255,255,.08);
+    overflow: hidden;
+}
+
+    .hero-aloha::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        backdrop-filter: blur(6px);
+        border-radius: inherit;
+        pointer-events: none;
+        mask: linear-gradient(#000, transparent 70%);
+        opacity: .35;
+    }
+
+    .hero-aloha .hero-inner {
+        position: relative;
+        z-index: 1;
+    }
+
+/* ---------- Card glass sutil ---------- */
+.card-glass {
+    background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+    border: 1px solid rgba(255,255,255,.07);
+}
+
+/* ---------- Tiles de destinos ---------- */
+.tile {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    padding: 1rem 1rem;
+    background: #0f1b2c;
+    border: 1px solid #1f2b40;
+    border-radius: 12px;
+    color: var(--color-text);
+    transition: transform .12s ease-out, box-shadow .12s ease-out, border-color .12s;
+}
+
+    .tile:hover {
+        transform: translateY(-2px);
+        border-color: rgba(167,119,227,.6);
+        box-shadow: 0 10px 24px rgba(0,0,0,.35);
+    }
+
+.tile-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.tile-title {
+    font-weight: 600;
+}
+
+.tile-sub {
+    font-size: .9rem;
+    color: var(--color-muted);
+}
+
+.tile-arrow {
+    font-weight: 700;
+    color: #d9d9ff;
+    opacity: .85;
+}

@@ -1,25 +1,30 @@
-@using Microsoft.AspNetCore.Components
-@using Microsoft.AspNetCore.Components.Authorization
 @inherits LayoutComponentBase
+@inject AuthenticationStateProvider AuthState
 
-<div class="topbar">
-    <div class="left">
-        <NavLink href="/" Match="NavLinkMatch.All">ALOHA</NavLink>
-        <NavLink href="/hoteles">Buscar</NavLink>
-        <NavLink href="/mis-reservas">Mis reservas</NavLink>
-        <NavLink href="/login">Login</NavLink>
-        <NavLink href="/register">Registro</NavLink>
-        <NavLink href="/logout">Salir</NavLink>
-    </div>
+<div class="container-fluid p-0">
+    <header class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
+        <a class="navbar-brand fw-bold" href="/">ALOHA</a>
+        <nav class="navbar-nav flex-row gap-3">
+            <a class="nav-link" href="/">Home</a>
+            <a class="nav-link" href="/buscar">Buscar</a>
 
-    <div class="right">
-        <AuthorizeView>
-            <Authorized>Hola, @context.User.Identity?.Name</Authorized>
-            <NotAuthorized>Invitado</NotAuthorized>
-        </AuthorizeView>
-    </div>
-</div>
+            <AuthorizeView>
+                <Authorized>
+                    <a class="nav-link" href="/reservas">Mis reservas</a>
+                    <a class="nav-link" href="/auth/logout">Salir</a>
+                    <span class="navbar-text ms-2">
+                        Hola, @context.User.Identity?.Name
+                    </span>
+                </Authorized>
+                <NotAuthorized>
+                    <a class="nav-link" href="/auth/login">Login</a>
+                    <a class="nav-link" href="/auth/register">Registrarse</a>
+                </NotAuthorized>
+            </AuthorizeView>
+        </nav>
+    </header>
 
-<div class="content">
-    @Body
+    <main class="container py-4">
+        @Body
+    </main>
 </div>

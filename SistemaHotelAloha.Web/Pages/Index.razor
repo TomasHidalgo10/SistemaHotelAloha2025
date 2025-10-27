@@ -1,18 +1,122 @@
 @page "/"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
 @inject NavigationManager Nav
 
-<Hero OnBuscar="Buscar" />
-<FeaturedDestinations />
+<div class="container py-4">
+
+    <!-- HERO: fondo degradado + vidrio -->
+    <section class="hero-aloha mb-4">
+        <div class="hero-inner">
+            <h1 class="display-5 fw-bold mb-2">Encontrá tu próxima estadía</h1>
+            <p class="lead m-0">Buscá hoteles, elegí fechas y reservá al instante.</p>
+        </div>
+    </section>
+
+    <!-- BUSCADOR -->
+    <div class="card card-glass p-4 mb-4">
+        <EditForm Model="_vm" OnValidSubmit="OnSearch">
+            <DataAnnotationsValidator />
+            <div class="row g-3 align-items-end">
+                <div class="col-lg-5">
+                    <label class="form-label">Destino</label>
+                    <InputText class="form-control form-control-lg" placeholder="Ej: Mendoza, Córdoba…" @bind-Value="_vm.Destino" />
+                    <ValidationMessage For="@(() => _vm.Destino)" />
+                </div>
+
+                <div class="col-sm-6 col-lg-2">
+                    <label class="form-label">Check-in</label>
+                    <InputDate class="form-control form-control-lg" @bind-Value="_vm.CheckIn" />
+                    <ValidationMessage For="@(() => _vm.CheckIn)" />
+                </div>
+
+                <div class="col-sm-6 col-lg-2">
+                    <label class="form-label">Check-out</label>
+                    <InputDate class="form-control form-control-lg" @bind-Value="_vm.CheckOut" />
+                    <ValidationMessage For="@(() => _vm.CheckOut)" />
+                </div>
+
+                <div class="col-lg-3 d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg">Buscar</button>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <div class="alert alert-danger mt-3">@_error</div>
+            }
+        </EditForm>
+    </div>
+
+    <!-- DESTINOS DESTACADOS -->
+    <div class="mb-2 d-flex align-items-center gap-2">
+        <h5 class="m-0 text-muted">Destinos destacados</h5>
+        <div class="flex-grow-1 border-bottom border-opacity-25"></div>
+    </div>
+
+    <div class="row g-3">
+        @foreach (var d in _destacados)
+        {
+            <div class="col-12 col-sm-6 col-lg-3">
+                <button class="tile w-100 text-start" @onclick="() => SelectDestination(d)">
+                    <div class="tile-body">
+                        <div class="tile-title">@d</div>
+                        <div class="tile-sub">Ver hoteles</div>
+                    </div>
+                    <span class="tile-arrow">→</span>
+                </button>
+            </div>
+        }
+    </div>
+</div>
 
 @code {
-    void Buscar(SistemaHotelAloha.Web.Services.BusquedaRequest req)
+    private readonly SearchVM _vm = new()
     {
-        var q = new List<string>();
-        if (!string.IsNullOrWhiteSpace(req.Destino)) q.Add($"destino={Uri.EscapeDataString(req.Destino)}");
-        if (req.CheckIn is not null) q.Add($"ci={req.CheckIn}");
-        if (req.CheckOut is not null) q.Add($"co={req.CheckOut}");
-        q.Add($"ad={req.Adultos}");
-        q.Add($"ni={req.Ninos}");
-        Nav.NavigateTo("/hoteles?" + string.Join("&", q));
+        CheckIn = DateTime.Today.AddDays(1),
+        CheckOut = DateTime.Today.AddDays(3)
+    };
+
+    private string? _error;
+
+    private void OnSearch()
+    {
+        _error = null;
+
+        if (_vm.CheckIn.HasValue && _vm.CheckOut.HasValue && _vm.CheckOut <= _vm.CheckIn)
+        {
+            _error = "La fecha de check-out debe ser posterior al check-in.";
+            return;
+        }
+
+        var destino = Uri.EscapeDataString(_vm.Destino ?? string.Empty);
+        var cin = _vm.CheckIn?.ToString("yyyy-MM-dd") ?? "";
+        var cout = _vm.CheckOut?.ToString("yyyy-MM-dd") ?? "";
+        var url = $"/buscar?destino={destino}&in={cin}&out={cout}";
+        Nav.NavigateTo(url, true);
     }
+
+    private void SelectDestination(string destino)
+    {
+        _vm.Destino = destino;
+        OnSearch();
+    }
+
+    public class SearchVM
+    {
+        [Required(ErrorMessage = "Ingresá un destino")]
+        public string? Destino { get; set; }
+
+        [Required(ErrorMessage = "Elegí la fecha de check-in")]
+        public DateTime? CheckIn { get; set; }
+
+        [Required(ErrorMessage = "Elegí la fecha de check-out")]
+        public DateTime? CheckOut { get; set; }
+    }
+
+    // Mock (reemplazá por BD cuando quieras)
+    private readonly List<string> _destacados = new()
+  {
+    "Buenos Aires", "Córdoba", "Mendoza", "Bariloche"
+  };
 }

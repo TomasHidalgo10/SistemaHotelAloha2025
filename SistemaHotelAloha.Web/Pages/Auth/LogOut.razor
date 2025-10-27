@@ -1,0 +1,14 @@
+﻿@page "/auth/logout"
+@using SistemaHotelAloha.Web.Auth
+@inject SimpleAuthStateProvider Auth
+@inject NavigationManager Nav
+
+<p>Cerrando sesión…</p>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await Auth.SignOutAsync();
+        Nav.NavigateTo("/", true);
+    }
+}

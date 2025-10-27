@@ -1,0 +1,87 @@
+@using SistemaHotelAloha.AccesoDatos
+
+@page "/reservas"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject SistemaHotelAloha.AccesoDatos.ReservaAdoRepository Repo
+@inject ReservasAdoRepository Repo
+@inject AuthenticationStateProvider AuthState
+@using System.Security.Claims
+
+<h3>Mis reservas</h3>
+
+@if (items is null)
+{
+    <p>Cargando...</p>
+}
+else if (items.Count == 0)
+{
+    <div class="alert alert-info">Aún no tenés reservas.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Habitación</th>
+                    <th>Desde</th>
+                    <th>Hasta</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in items)
+                {
+                    <tr>
+                        <td>@r.Id</td>
+                        <td>@r.HabitacionLabel</td>
+                        <td>@r.Desde:dd/MM/yyyy</td>
+                        <td>@r.Hasta:dd/MM/yyyy</td>
+                        <td>@r.PrecioTotal.ToString("C")</td>
+                        <td>@r.Estado</td>
+                        <td>
+                            @if (r.Estado != "Cancelada")
+                            {
+                                <button class="btn btn-outline-danger btn-sm"
+                                        @onclick="() => Cancelar(r.Id)">
+                                    Cancelar
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<ReservasAdoRepository.ReservaDto>? items;
+    private int _userId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        var user = state.User;
+        var idStr = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(idStr, out _userId))
+        {
+            items = new();
+            return;
+        }
+
+        items = Repo.GetByUsuario(_userId);
+    }
+
+    private void Refrescar() => items = Repo.GetByUsuario(_userId);
+
+    private void Cancelar(int id)
+    {
+        if (Repo.Cancelar(id, _userId)) Refrescar();
+    }
+}

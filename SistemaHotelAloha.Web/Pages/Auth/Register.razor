@@ -1,0 +1,121 @@
+@using SistemaHotelAloha.AccesoDatos
+@page "/auth/register"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject NavigationManager Nav
+
+@* Si tenés un servicio ADO inyectable, descomenta esta línea y registralo en Program.cs *@
+@* @inject IUsuarioAdoRepository Usuarios *@
+
+<div class="container py-4">
+    <div class="card p-4">
+        <h3 class="mb-3">Crear cuenta</h3>
+
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <div class="alert alert-danger">@_error</div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(_ok))
+        {
+            <div class="alert alert-success">@_ok</div>
+        }
+
+        <EditForm Model="_vm" OnValidSubmit="OnSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Nombre</label>
+                    <InputText class="form-control" @bind-Value="_vm.Nombre" />
+                    <ValidationMessage For="@(() => _vm.Nombre)" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Email</label>
+                    <InputText class="form-control" @bind-Value="_vm.Email" />
+                    <ValidationMessage For="@(() => _vm.Email)" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Contraseña</label>
+                    <InputText type="password" class="form-control" @bind-Value="_vm.Password" />
+                    <ValidationMessage For="@(() => _vm.Password)" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Repetir contraseña</label>
+                    <InputText type="password" class="form-control" @bind-Value="_vm.ConfirmPassword" />
+                    <ValidationMessage For="@(() => _vm.ConfirmPassword)" />
+                </div>
+            </div>
+
+            <button class="btn btn-success w-100 mt-3" disabled="@_busy">
+                @(_busy ? "Creando cuenta..." : "Registrarme")
+            </button>
+        </EditForm>
+
+        <div class="text-center mt-3">
+            <NavLink href="/auth/login">¿Ya tenés cuenta? Iniciá sesión</NavLink>
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly RegisterVM _vm = new();
+    private bool _busy;
+    private string? _error;
+    private string? _ok;
+
+    private async Task OnSubmit()
+    {
+        _error = _ok = null;
+        _busy = true;
+        try
+        {
+            // -----------------------------
+            // 1) Insertar usuario (ADO.NET)
+            // -----------------------------
+
+            // Variante A: servicio inyectado
+            // await Usuarios.CreateUserAsync(new UsuarioDTO {
+            //   Nombre = _vm.Nombre,
+            //   Email  = _vm.Email,
+            //   PasswordPlano = _vm.Password
+            // });
+
+            // Variante B: clase estática ADO
+            // AdoUsuarios.Create(_vm.Nombre, _vm.Email, _vm.Password);
+
+            // Simulación para que veas el flujo si aún no conectaste:
+            await Task.Delay(300);
+
+            _ok = "Cuenta creada correctamente. Te redirigimos al login…";
+            await Task.Delay(900);
+            Nav.NavigateTo("/auth/login", true);
+        }
+        catch (Exception ex)
+        {
+            _error = "No se pudo crear la cuenta. " + ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+            StateHasChanged();
+        }
+    }
+
+    public class RegisterVM
+    {
+        [Required, StringLength(80, MinimumLength = 2)]
+        public string Nombre { get; set; } = string.Empty;
+
+        [Required, EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required, StringLength(64, MinimumLength = 6)]
+        public string Password { get; set; } = string.Empty;
+
+        [Required, Compare(nameof(Password), ErrorMessage = "Las contraseñas no coinciden")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+}

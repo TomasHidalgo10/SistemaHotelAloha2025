@@ -1,4 +1,4 @@
-using MySql.Data.MySqlClient;
+﻿using MySql.Data.MySqlClient;
 
 namespace SistemaHotelAloha.AccesoDatos.Infra
 {
@@ -6,8 +6,11 @@ namespace SistemaHotelAloha.AccesoDatos.Infra
     {
         public static MySqlConnection Create()
         {
-            var cs = ConnectionStringProvider.GetDefault();
-            return new MySqlConnection(cs);
+            // Para MySql.Data (Oracle)
+            var connectionString =
+                "server=localhost;port=3306;database=aloha_db;uid=root;pwd=root;AllowPublicKeyRetrieval=true";
+
+            return new MySqlConnection(connectionString);
         }
     }
 }

@@ -1,35 +1,50 @@
+using System;
 using Microsoft.Extensions.Configuration;
 
 namespace SistemaHotelAloha.AccesoDatos.Infra
 {
-    internal static class ConnectionStringProvider
+    /// <summary>
+    /// Lee la cadena "DefaultConnection" desde appsettings.json (copiado en la carpeta de salida)
+    /// y la cachea en memoria. Si no existe, usa la variable de entorno ALOHA_CONNECTION
+    /// y, como último recurso, una cadena por defecto a localhost.
+    /// </summary>
+    public static class ConnectionStringProvider
     {
-        private static IConfigurationRoot? _config;
+        private static string? _cached;
 
-        private static IConfigurationRoot GetConfig()
+        public static string Get()
         {
-            if (_config != null) return _config;
+            if (!string.IsNullOrWhiteSpace(_cached))
+                return _cached;
 
+            // En Desktop, appsettings.json ya se copia a bin/ (PreserveNewest),
+            // por lo que AppContext.BaseDirectory es la base correcta.
             var basePath = AppContext.BaseDirectory;
+
             var builder = new ConfigurationBuilder()
                 .SetBasePath(basePath)
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false);
 
-            var parent = Directory.GetParent(basePath)?.FullName;
-            if (parent != null)
-                builder.AddJsonFile(Path.Combine(parent, "appsettings.json"), optional: true, reloadOnChange: true);
+            var config = builder.Build();
 
-            _config = builder.Build();
-            return _config;
-        }
+            var cs = config.GetConnectionString("DefaultConnection");
 
-        public static string GetDefault()
-        {
-            var cfg = GetConfig();
-            var cs = cfg.GetConnectionString("DefaultConnection");
             if (string.IsNullOrWhiteSpace(cs))
-                throw new InvalidOperationException("No se encontró 'ConnectionStrings:DefaultConnection' en appsettings.json.");
-            return cs!;
+            {
+                // fallback a variable de entorno
+                cs = Environment.GetEnvironmentVariable("ALOHA_CONNECTION");
+            }
+
+            if (string.IsNullOrWhiteSpace(cs))
+            {
+                // último fallback (útil en desarrollo)
+                cs = "Server=127.0.0.1;Database=ALOHA_DB;Uid=root;Pwd=root;Port=3306";
+            }
+
+            _cached = cs;
+            return cs;
         }
+
+        public static string GetDefault() => Get();
     }
 }

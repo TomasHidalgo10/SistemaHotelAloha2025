@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Windows.Forms;
 using SistemaHotelAloha.Desktop.Data;
 using SistemaHotelAloha.Desktop.Models;
+using System.Linq;
 
 namespace SistemaHotelAloha.Desktop.Forms
 {
@@ -21,7 +22,7 @@ namespace SistemaHotelAloha.Desktop.Forms
             _repo.Create(new Habitacion { Numero = "101", Tipo = "Simple", Estado = "Disponible", PrecioNoche = 35000 });
             _repo.Create(new Habitacion { Numero = "202", Tipo = "Doble", Estado = "Limpieza", PrecioNoche = 55000 });
 
-            _binding = _repo.GetAll();
+            _binding = new BindingList<Habitacion>(_repo.GetAll().ToList());
             dgvHabitaciones.AutoGenerateColumns = false;
             dgvHabitaciones.DataSource = _binding;
         }

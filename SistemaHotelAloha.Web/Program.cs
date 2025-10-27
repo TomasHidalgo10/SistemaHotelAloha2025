@@ -1,54 +1,42 @@
-using SistemaHotelAloha.Web.Services;
-using SistemaHotelAloha.Web.Security;
-using SistemaHotelAloha.Web.Data;
-using SistemaHotelAloha.Web.Auth;
+global using SistemaHotelAloha.AccesoDatos;
+global using SistemaHotelAloha.AccesoDatos.Infra;
 using Microsoft.AspNetCore.Components.Authorization;
-using SistemaHotelAloha.Servicios;
-using Microsoft.EntityFrameworkCore;
-using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using SistemaHotelAloha.Web.Auth;
 
 
 var builder = WebApplication.CreateBuilder(args);
 
-// -------------------- EF Core MySQL --------------------
-var conn = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<AlohaDbContext>(options =>
-    options.UseMySql(conn, ServerVersion.AutoDetect(conn)));
-
-builder.Services.AddScoped<UserRepository>();
-
-// -------------------- Blazor + MVC --------------------
+// Blazor Server
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-builder.Services.AddControllersWithViews();
+
+// Autenticación “simple” para Blazor
 builder.Services.AddAuthorizationCore();
+builder.Services.AddScoped<SimpleAuthStateProvider>(); // <-- el tuyo
+builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
+    sp.GetRequiredService<SimpleAuthStateProvider>());
+
+// tus repos ADO que ya tenías:
+builder.Services.AddScoped<SistemaHotelAloha.AccesoDatos.UsuarioAdoRepository>();
+builder.Services.AddScoped<SistemaHotelAloha.AccesoDatos.HabitacionAdoRepository>();
+builder.Services.AddScoped<SistemaHotelAloha.AccesoDatos.ReservasAdoRepository>();
+builder.Services.AddScoped<SistemaHotelAloha.AccesoDatos.ServicioAdicionalAdoRepository>();
 builder.Services.AddScoped<AuthenticationStateProvider, SimpleAuthStateProvider>();
-builder.Services.AddSingleton<IHotelRepository, InMemoryHotelRepository>();
-builder.Services.AddSingleton<IBookingRepository, InMemoryBookingRepository>();
-builder.Services.AddScoped<HotelService>();
-builder.Services.AddScoped<BookingService>();
-builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<PasswordHasher>();
+builder.Services.AddScoped<SimpleAuthStateProvider>();
 
 
 var app = builder.Build();
 
-
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
+    app.UseExceptionHandler("/Error");
 }
 
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
-app.UseAuthorization();
-
-app.MapControllers();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 
 app.Run();
-

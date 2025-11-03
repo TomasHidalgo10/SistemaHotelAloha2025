@@ -41,10 +41,10 @@ namespace SistemaHotelAloha.AccesoDatos
         {
             using var cn = Infra.MySqlConnectionFactory.Create();
             using var cmd = new MySqlCommand(@"
-            SELECT Id
-            FROM Usuarios
-            WHERE Email=@Email AND Contraseña=@Contraseña AND Activo=1
-            LIMIT 1;", cn);
+        SELECT Id
+        FROM Usuarios
+        WHERE Email=@Email AND Contraseña=@Contraseña AND Activo=1
+        LIMIT 1;", cn);
 
             cmd.Parameters.AddWithValue("@Email", email);
             cmd.Parameters.AddWithValue("@Contraseña", contraseña);
@@ -90,13 +90,13 @@ namespace SistemaHotelAloha.AccesoDatos
                 VALUES (@Nombre, @Apellido, @Email, @Contraseña, @Telefono, @FechaRegistro, @Activo);
                 SELECT LAST_INSERT_ID();", cn);
 
-                cmd.Parameters.AddWithValue("@Nombre", nombre);
-                cmd.Parameters.AddWithValue("@Apellido", (object?)apellido ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@Email", email);
-                cmd.Parameters.AddWithValue("@Contraseña", contraseña);
-                cmd.Parameters.AddWithValue("@Telefono", (object?)telefono ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@FechaRegistro", fechaRegistro);
-                cmd.Parameters.AddWithValue("@Activo", activo);
+            cmd.Parameters.AddWithValue("@Nombre", nombre);
+            cmd.Parameters.AddWithValue("@Apellido", (object?)apellido ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@Email", email);
+            cmd.Parameters.AddWithValue("@Contraseña", contraseña);
+            cmd.Parameters.AddWithValue("@Telefono", (object?)telefono ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@FechaRegistro", fechaRegistro);
+            cmd.Parameters.AddWithValue("@Activo", activo);
 
             try
             {
@@ -139,14 +139,14 @@ namespace SistemaHotelAloha.AccesoDatos
                     Telefono=@Telefono, FechaRegistro=@FechaRegistro, Activo=@Activo
                 WHERE Id=@Id;", cn);
 
-                cmd.Parameters.AddWithValue("@Id", id);
-                cmd.Parameters.AddWithValue("@Nombre", nombre);
-                cmd.Parameters.AddWithValue("@Apellido", (object?)apellido ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@Email", email);
-                cmd.Parameters.AddWithValue("@Contraseña", contraseña);
-                cmd.Parameters.AddWithValue("@Telefono", (object?)telefono ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@FechaRegistro", fechaRegistro);
-                cmd.Parameters.AddWithValue("@Activo", activo);
+            cmd.Parameters.AddWithValue("@Id", id);
+            cmd.Parameters.AddWithValue("@Nombre", nombre);
+            cmd.Parameters.AddWithValue("@Apellido", (object?)apellido ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@Email", email);
+            cmd.Parameters.AddWithValue("@Contraseña", contraseña);
+            cmd.Parameters.AddWithValue("@Telefono", (object?)telefono ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@FechaRegistro", fechaRegistro);
+            cmd.Parameters.AddWithValue("@Activo", activo);
 
             try
             {

@@ -1,41 +1,57 @@
-global using SistemaHotelAloha.AccesoDatos;
-global using SistemaHotelAloha.AccesoDatos.Infra;
-using Microsoft.AspNetCore.Components.Authorization;
+Ôªøusing Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using SistemaHotelAloha.AccesoDatos;
 using SistemaHotelAloha.Web.Auth;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Blazor Server
+// Blazor
 builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
+builder.Services
+    .AddServerSideBlazor()
+    .AddCircuitOptions(o => o.DetailedErrors = true);
 
-// AutenticaciÛn ìsimpleî para Blazor
+// Auth simple + storage protegido
 builder.Services.AddAuthorizationCore();
-builder.Services.AddScoped<SimpleAuthStateProvider>(); // <-- el tuyo
+builder.Services.AddScoped<ProtectedSessionStorage>();
+builder.Services.AddScoped<ProtectedLocalStorage>();
+
+// üëá Registramos el provider COMO S√ç MISMO y como base interface, apuntando a la MISMA instancia
+builder.Services.AddScoped<SimpleAuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
     sp.GetRequiredService<SimpleAuthStateProvider>());
 
-// tus repos ADO que ya tenÌas:
-builder.Services.AddScoped<SistemaHotelAloha.AccesoDatos.UsuarioAdoRepository>();
-builder.Services.AddScoped<SistemaHotelAloha.AccesoDatos.HabitacionAdoRepository>();
-builder.Services.AddScoped<SistemaHotelAloha.AccesoDatos.ReservasAdoRepository>();
-builder.Services.AddScoped<SistemaHotelAloha.AccesoDatos.ServicioAdicionalAdoRepository>();
-builder.Services.AddScoped<AuthenticationStateProvider, SimpleAuthStateProvider>();
-builder.Services.AddScoped<SimpleAuthStateProvider>();
+// Controllers (PDF)
+builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
 
+// Repo ADO.NET con cadena v√°lida
+var conn = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(conn))
+    throw new InvalidOperationException("Falta ConnectionStrings:DefaultConnection en appsettings.json del proyecto Web");
+builder.Services.AddScoped(_ => new ReservasAdoRepository(conn));
 
 var app = builder.Build();
 
-if (!app.Environment.IsDevelopment())
+// Pipeline
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
 {
     app.UseExceptionHandler("/Error");
+    app.UseHsts();
 }
 
+app.UseHttpsRedirection();
 app.UseStaticFiles();
-app.UseRouting();
 
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();       
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 

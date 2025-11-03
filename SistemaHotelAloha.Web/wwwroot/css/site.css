@@ -10,6 +10,10 @@
     --radius: 14px;
 }
 
+.object-fit-cover {
+    object-fit: cover;
+}
+
 /* =======================
    Base general
    ======================= */

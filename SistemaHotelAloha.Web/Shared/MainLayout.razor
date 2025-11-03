@@ -1,30 +1,42 @@
 @inherits LayoutComponentBase
-@inject AuthenticationStateProvider AuthState
+@using Microsoft.AspNetCore.Components
 
-<div class="container-fluid p-0">
-    <header class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
-        <a class="navbar-brand fw-bold" href="/">ALOHA</a>
-        <nav class="navbar-nav flex-row gap-3">
-            <a class="nav-link" href="/">Home</a>
-            <a class="nav-link" href="/buscar">Buscar</a>
+<header class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+    <div class="container">
+        <NavLink class="navbar-brand fw-bold" href="/">ALOHA</NavLink>
 
-            <AuthorizeView>
-                <Authorized>
-                    <a class="nav-link" href="/reservas">Mis reservas</a>
-                    <a class="nav-link" href="/auth/logout">Salir</a>
-                    <span class="navbar-text ms-2">
-                        Hola, @context.User.Identity?.Name
-                    </span>
-                </Authorized>
-                <NotAuthorized>
-                    <a class="nav-link" href="/auth/login">Login</a>
-                    <a class="nav-link" href="/auth/register">Registrarse</a>
-                </NotAuthorized>
-            </AuthorizeView>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navAloha">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <nav id="navAloha" class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><NavLink class="nav-link" href="/">Home</NavLink></li>
+                <li class="nav-item"><NavLink class="nav-link" href="/habitaciones">Habitaciones</NavLink></li>
+                <li class="nav-item"><NavLink class="nav-link" href="/nosotros">Nosotros</NavLink></li>
+
+                <AuthorizeView>
+                    <Authorized>
+                        <li class="nav-item"><NavLink class="nav-link" href="/reservas">Mis reservas</NavLink></li>
+                    </Authorized>
+                </AuthorizeView>
+            </ul>
+
+            <ul class="navbar-nav ms-auto">
+                <AuthorizeView>
+                    <Authorized>
+                        <li class="nav-item"><NavLink class="nav-link" href="/auth/logout">Salir</NavLink></li>
+                    </Authorized>
+                    <NotAuthorized>
+                        <li class="nav-item"><NavLink class="nav-link" href="/auth/login">Login</NavLink></li>
+                        <li class="nav-item"><NavLink class="nav-link" href="/auth/register">Registrarse</NavLink></li>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </ul>
         </nav>
-    </header>
+    </div>
+</header>
 
-    <main class="container py-4">
-        @Body
-    </main>
-</div>
+<main class="container py-4">
+    @Body
+</main>

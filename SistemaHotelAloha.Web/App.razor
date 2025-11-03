@@ -1,13 +1,32 @@
+@using Microsoft.AspNetCore.Components.Authorization
 
 <CascadingAuthenticationState>
-    <Router AppAssembly="@typeof(App).Assembly">
-        <Found Context="routeData">
-            <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-        </Found>
-        <NotFound>
-            <LayoutView Layout="@typeof(MainLayout)">
-                <p class="text-danger p-3">Página no encontrada</p>
+    <ErrorBoundary>
+        <ChildContent>
+            <Router AppAssembly="@typeof(App).Assembly">
+                <Found Context="routeData">
+                    <!-- Usamos RouteView. Las páginas que requieran login llevan [Authorize]. -->
+                    <RouteView RouteData="@routeData" DefaultLayout="@typeof(Shared.MainLayout)" />
+                </Found>
+                <NotFound>
+                    <LayoutView Layout="@typeof(Shared.MainLayout)">
+                        <div class="container py-4">
+                            <h4>404</h4>
+                            <p>La página no existe.</p>
+                        </div>
+                    </LayoutView>
+                </NotFound>
+            </Router>
+        </ChildContent>
+
+        <ErrorContent>
+            <LayoutView Layout="@typeof(Shared.MainLayout)">
+                <div class="container py-4">
+                    <h4>Ocurrió un error en la página</h4>
+                    <p>Probá recargar o volver al inicio.</p>
+                    <a class="btn btn-outline-secondary" href="/">Inicio</a>
+                </div>
             </LayoutView>
-        </NotFound>
-    </Router>
+        </ErrorContent>
+    </ErrorBoundary>
 </CascadingAuthenticationState>

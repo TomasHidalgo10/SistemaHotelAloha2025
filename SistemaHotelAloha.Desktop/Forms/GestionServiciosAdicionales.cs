@@ -1,16 +1,14 @@
-using MySql.Data.MySqlClient;
-using SistemaHotelAloha.Desktop.Data;
-using SistemaHotelAloha.Desktop.Helpers;
-using SistemaHotelAloha.Desktop.Models;
 using System.ComponentModel;
-using System.Data;
 using System.Windows.Forms;
+using SistemaHotelAloha.Desktop.Data;
+using SistemaHotelAloha.Desktop.Models;
 
 namespace SistemaHotelAloha.Desktop.Forms
 {
     public partial class GestionServiciosAdicionales : Form
     {
-        private DataTable _dt = new();
+        private readonly ServicioAdicionalRepository _repo = new();
+        private BindingList<ServicioAdicional> _binding = null!;
 
         public GestionServiciosAdicionales()
         {
@@ -19,168 +17,91 @@ namespace SistemaHotelAloha.Desktop.Forms
 
         private void GestionServiciosAdicionales_Load(object sender, EventArgs e)
         {
-            Cargar();
-            dgv.ClearSelection();
-            Habilitar(false);
+            
+            _repo.Create(new ServicioAdicional { Nombre = "Spa", Precio = 15000 });
+            _repo.Create(new ServicioAdicional { Nombre = "Traslado", Precio = 8000 });
+
+            _binding = _repo.GetAll();
+            dgvServicios.AutoGenerateColumns = false;
+            dgvServicios.DataSource = _binding;
         }
 
-        // ===== Helpers: foco siempre en columna visible =====
-        private int FirstVisibleColumnIndex()
+        private ServicioAdicional? GetFromInputs(bool includeId = false)
         {
-            foreach (DataGridViewColumn c in dgv.Columns)
-                if (c.Visible) return c.Index;
-            return -1;
+            if (string.IsNullOrWhiteSpace(txtNombre.Text) || string.IsNullOrWhiteSpace(txtPrecio.Text))
+            {
+                MessageBox.Show("Completá Nombre y Precio.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return null;
+            }
+            if (!decimal.TryParse(txtPrecio.Text, out var precio))
+            {
+                MessageBox.Show("Precio inválido.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return null;
+            }
+            var s = new ServicioAdicional
+            {
+                Nombre = txtNombre.Text.Trim(),
+                Precio = precio
+            };
+            if (includeId && int.TryParse(txtId.Text, out var id))
+                s.Id = id;
+            return s;
         }
 
-        private void SeleccionarUltimoVisible()
+        private void dgvServicios_SelectionChanged(object? sender, EventArgs e)
         {
-            if (dgv.Rows.Count == 0) return;
-            int last = dgv.Rows.Count - 1;
-            int vis = FirstVisibleColumnIndex();
-            if (vis >= 0)
+            if (dgvServicios.CurrentRow?.DataBoundItem is ServicioAdicional s)
             {
-                dgv.ClearSelection();
-                dgv.Rows[last].Selected = true;
-                dgv.CurrentCell = dgv.Rows[last].Cells[vis];
+                txtId.Text = s.Id.ToString();
+                txtNombre.Text = s.Nombre;
+                txtPrecio.Text = s.Precio.ToString("0.##");
             }
-        }
-
-        private void SeleccionarPorId(int id)
-        {
-            int vis = FirstVisibleColumnIndex();
-            if (vis < 0) return;
-
-            foreach (DataGridViewRow r in dgv.Rows)
-            {
-                if (r.DataBoundItem is DataRowView drv && Convert.ToInt32(drv.Row["id"]) == id)
-                {
-                    dgv.ClearSelection();
-                    r.Selected = true;
-                    dgv.CurrentCell = r.Cells[vis];
-                    break;
-                }
-            }
-        }
-        // =====================================================
-
-        private void Cargar()
-        {
-            try
-            {
-                using var cn = Db.Conn(); cn.Open();
-                using var cmd = new MySqlCommand("sp_servicios_listar", cn) { CommandType = CommandType.StoredProcedure };
-                using var da = new MySqlDataAdapter(cmd);
-                _dt = new DataTable();
-                da.Fill(_dt);
-                dgv.DataSource = _dt;
-
-                // columnas esperadas: id, nombre, precio, activo
-                if (dgv.Columns.Contains("id"))
-                    dgv.Columns["id"].Visible = false;
-            }
-            catch (MySqlException ex)
-            {
-                MessageBox.Show($"MySQL: {ex.Message}", "BD", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void dgv_SelectionChanged(object? sender, EventArgs e) => Habilitar(dgv.CurrentRow != null);
-
-        private void Habilitar(bool on)
-        {
-            btnEditar.Enabled = on;
-            btnEliminar.Enabled = on;
-            btnCrear.Enabled = true;
         }
 
         private void btnCrear_Click(object sender, EventArgs e)
         {
-            using var dlg = new ServicioAdicionalEditForm();
-            if (dlg.ShowDialog(this) != DialogResult.OK) return;
-
-            try
-            {
-                using var cn = Db.Conn(); cn.Open();
-                using var cmd = new MySqlCommand("sp_servicio_crear", cn)
-                { CommandType = CommandType.StoredProcedure };
-
-                cmd.Parameters.AddWithValue("@p_nombre", dlg.NombreSeleccionado);
-                cmd.Parameters.AddWithValue("@p_precio", dlg.Precio);
-                cmd.Parameters.AddWithValue("@p_activo", dlg.Activo);
-                cmd.ExecuteNonQuery();
-
-                Cargar();
-                SeleccionarUltimoVisible();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Crear servicio", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            var s = GetFromInputs();
+            if (s is null) return;
+            _repo.Create(s);
+            dgvServicios.Refresh();
+            Limpiar();
         }
 
-        private void btnEditar_Click(object sender, EventArgs e)
+        private void btnModificar_Click(object sender, EventArgs e)
         {
-            if (dgv.CurrentRow == null) return;
-            var row = ((DataRowView)dgv.CurrentRow.DataBoundItem).Row;
-
-            int id = Convert.ToInt32(row["id"]);
-            string nombre = row["nombre"]?.ToString() ?? "";
-            decimal precio = row["precio"] == DBNull.Value ? 0m : Convert.ToDecimal(row["precio"]);
-            bool activo = row.Table.Columns.Contains("activo") &&
-                          (row["activo"].ToString() == "1" || row["activo"].ToString()?.ToLower() == "true");
-
-            using var dlg = new ServicioAdicionalEditForm(id, nombre, precio, activo);
-            if (dlg.ShowDialog(this) != DialogResult.OK) return;
-
-            try
+            if (!int.TryParse(txtId.Text, out var id))
             {
-                using var cn = Db.Conn(); cn.Open();
-                using var cmd = new MySqlCommand("sp_servicio_actualizar", cn)
-                { CommandType = CommandType.StoredProcedure };
-
-                cmd.Parameters.AddWithValue("@p_id", id);
-                cmd.Parameters.AddWithValue("@p_nombre", dlg.NombreSeleccionado);
-                cmd.Parameters.AddWithValue("@p_precio", dlg.Precio);
-                cmd.Parameters.AddWithValue("@p_activo", dlg.Activo);
-                cmd.ExecuteNonQuery();
-
-                Cargar();
-                SeleccionarPorId(id);
+                MessageBox.Show("Seleccioná un ítem de la lista.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Editar servicio", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            var s = GetFromInputs(includeId: true);
+            if (s is null) return;
+            s.Id = id;
+            _repo.Update(s);
+            dgvServicios.Refresh();
         }
 
         private void btnEliminar_Click(object sender, EventArgs e)
         {
-            if (dgv.CurrentRow == null) return;
-            var row = ((DataRowView)dgv.CurrentRow.DataBoundItem).Row;
-            int id = Convert.ToInt32(row["id"]);
-
-            if (MessageBox.Show($"¿Eliminar servicio #{id}?", "Confirmar",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
-
-            try
+            if (!int.TryParse(txtId.Text, out var id))
             {
-                using var cn = Db.Conn(); cn.Open();
-                using var cmd = new MySqlCommand("sp_servicio_eliminar", cn)
-                { CommandType = CommandType.StoredProcedure };
-                cmd.Parameters.AddWithValue("@p_id", id);
-                cmd.ExecuteNonQuery();
-
-                Cargar();
-                SeleccionarUltimoVisible();
+                MessageBox.Show("Seleccioná un ítem de la lista.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
             }
-            catch (Exception ex)
+            if (MessageBox.Show("¿Eliminar el servicio seleccionado?", "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
-                MessageBox.Show(ex.Message, "Eliminar servicio", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                _repo.Delete(id);
+                dgvServicios.Refresh();
+                Limpiar();
             }
+        }
+
+        private void Limpiar()
+        {
+            txtId.Clear();
+            txtNombre.Clear();
+            txtPrecio.Clear();
+            txtNombre.Focus();
         }
     }
 }

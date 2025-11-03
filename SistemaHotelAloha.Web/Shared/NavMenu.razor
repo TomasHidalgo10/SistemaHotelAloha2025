@@ -1,51 +1,39 @@
-@using Microsoft.AspNetCore.Components.Authorization
-@using SistemaHotelAloha.Web.Auth
-@inject AuthenticationStateProvider AuthStateProvider
-@inject CustomAuthStateProvider CustomAuth
+@inherits LayoutComponentBase
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-gradient-primary shadow-sm">
-    <div class="container">
-        <a class="navbar-brand fw-bold" href="/">ALOHA</a>
+<header class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
+    <NavLink class="navbar-brand fw-bold" href="/">ALOHA</NavLink>
 
-        <button class="navbar-toggler" type="button" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#alohaNav">
+        <span class="navbar-toggler-icon"></span>
+    </button>
 
-        <div class="@NavMenuCssClass">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <NavLink class="nav-link" href="/">Home</NavLink>
-                </li>
-                <li class="nav-item">
-                    <NavLink class="nav-link" href="/buscar">Buscar</NavLink>
-                </li>
-                <li class="nav-item">
-                    <NavLink class="nav-link" href="/reservas">Mis reservas</NavLink>
-                </li>
-            </ul>
-
+    <div class="collapse navbar-collapse" id="alohaNav">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item"><NavLink class="nav-link" href="/">Home</NavLink></li>
+            <li class="nav-item"><NavLink class="nav-link" href="/buscar">Buscar</NavLink></li>
+            <li class="nav-item"><NavLink class="nav-link" href="/habitaciones">Habitaciones</NavLink></li>
             <AuthorizeView>
-                <Authorized Context="ctx">
-                    <span class="navbar-text me-3">
-                        Hola, @ctx.User?.Identity?.Name
-                    </span>
-                    <NavLink class="btn btn-outline-light btn-sm" href="/auth/logout">Salir</NavLink>
+                <Authorized>
+                    <li class="nav-item"><NavLink class="nav-link" href="/reservas">Mis reservas</NavLink></li>
+                </Authorized>
+            </AuthorizeView>
+        </ul>
+
+        <ul class="navbar-nav ms-auto">
+            <AuthorizeView>
+                <Authorized>
+                    <li class="nav-item"><span class="navbar-text me-2">Hola, @context.User.Identity?.Name</span></li>
+                    <li class="nav-item"><NavLink class="nav-link" href="/auth/logout">Salir</NavLink></li>
                 </Authorized>
                 <NotAuthorized>
-                    <NavLink class="btn btn-outline-light btn-sm me-2" href="/auth/login">Login</NavLink>
-                    <NavLink class="btn btn-light btn-sm" href="/auth/register">Registrarse</NavLink>
+                    <li class="nav-item"><NavLink class="nav-link" href="/auth/login">Login</NavLink></li>
+                    <li class="nav-item"><NavLink class="nav-link" href="/auth/register">Registrarse</NavLink></li>
                 </NotAuthorized>
             </AuthorizeView>
-        </div>
+        </ul>
     </div>
-</nav>
+</header>
 
-@code {
-    private bool collapseNavMenu = true;
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse navbar-collapse" : "navbar-collapse";
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
-}
+<main class="container py-4">
+    @Body
+</main>

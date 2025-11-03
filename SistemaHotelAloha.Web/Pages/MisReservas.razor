@@ -1,0 +1,113 @@
+@page "/reservas"
+@attribute [Authorize]
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using SistemaHotelAloha.AccesoDatos
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ReservasAdoRepository Repo
+@inject IJSRuntime JS
+
+<h2>Mis reservas</h2>
+
+@if (_reservas is null)
+{
+    <p>Cargando...</p>
+}
+else if (!_reservas.Any())
+{
+    <p>No tenés reservas.</p>
+}
+else
+{
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Destino</th>
+                <th>Habitación</th>
+                <th>Desde</th>
+                <th>Hasta</th>
+                <th>Noches</th>
+                <th>Total</th>
+                <th>Estado</th>
+                <th class="text-end">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in _reservas)
+            {
+                <tr>
+                    <td>@r.Id</td>
+                    <td>@r.Destino</td>
+                    <td>@r.Habitacion</td>
+                    <td>@r.FechaDesde:dd/MM/yyyy</td>
+                    <td>@r.FechaHasta:dd/MM/yyyy</td>
+                    <td>@r.Noches</td>
+                    <td>@r.Total.ToString("C")</td>
+                    <td>@r.Estado</td>
+                    <td class="text-end">
+                        <a class="btn btn-outline-secondary btn-sm me-2" href="@($"/pdf/reserva/{r.Id}")" target="_blank">PDF</a>
+                        @if (r.Estado == "Confirmada")
+                        {
+                            <button class="btn btn-outline-danger btn-sm" @onclick="() => Cancelar(r.Id)">Cancelar</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ReservaDTO>? _reservas;
+    private int? _idUsuario;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        _idUsuario = GetUserId(auth.User);
+        if (_idUsuario is null) return;
+
+        try
+        {
+            _reservas = Repo.ListarReservasDeUsuario(_idUsuario.Value).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Reservas.Load] {ex}");
+            _reservas = new();
+        }
+    }
+
+    private async Task Cancelar(int idReserva)
+    {
+        if (_idUsuario is null) return;
+
+        try
+        {
+            var ok = Repo.CancelarReserva(idReserva, _idUsuario.Value);
+            if (ok)
+            {
+                var r = _reservas!.First(x => x.Id == idReserva);
+                r.Estado = "Cancelada";
+                StateHasChanged();
+                await JS.InvokeVoidAsync("alert", "Reserva cancelada.");
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", "No se pudo cancelar la reserva.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Reservas.Cancelar] {ex}");
+            await JS.InvokeVoidAsync("alert", "Ocurrió un problema al cancelar.");
+        }
+    }
+
+    private int? GetUserId(ClaimsPrincipal u)
+    {
+        var s = u.FindFirstValue(ClaimTypes.NameIdentifier);
+        return int.TryParse(s, out var id) ? id : null;
+    }
+}

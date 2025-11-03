@@ -4,24 +4,27 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
-
-		<!-- Asegura que Razor se compile -->
 		<RazorLangVersion>8.0</RazorLangVersion>
+	
+		<PlatformTarget>x64</PlatformTarget>
 	</PropertyGroup>
 
-	<!-- No pongas nada que haga Remove de *.cshtml -->
-	<!-- No incluyas Microsoft.AspNetCore.Mvc si no lo necesitas -->
-
 	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.10" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.10" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <ProjectReference Include="..\SistemaHotelAloha.AccesoDatos\SistemaHotelAloha.AccesoDatos.csproj" />
+		<ProjectReference Include="..\SistemaHotelAloha.AccesoDatos\SistemaHotelAloha.AccesoDatos.csproj" />
 	</ItemGroup>
 
 
+	<ItemGroup>
+		<PackageReference Include="QuestPDF" Version="2024.10.0" />
+		<PackageReference Include="SkiaSharp" Version="2.88.6" />
+		<PackageReference Include="SkiaSharp.HarfBuzz" Version="2.88.6" />
+	</ItemGroup>
+
+	
+	<ItemGroup>
+		<None Include="appsettings.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 
 </Project>

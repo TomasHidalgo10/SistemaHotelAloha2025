@@ -1,44 +1,30 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
-using System.Security.Claims;
-using System.Xml.Linq;
 
 namespace SistemaHotelAloha.Web.Auth
 {
-    public class SimpleAuthStateProvider : AuthenticationStateProvider
+    public sealed class SimpleAuthStateProvider : AuthenticationStateProvider
     {
+        private const string StorageKey = "auth_session_v1";
         private readonly ProtectedSessionStorage _storage;
-        private readonly NavigationManager _nav;
 
-        public SimpleAuthStateProvider(ProtectedSessionStorage storage, NavigationManager nav)
+        public SimpleAuthStateProvider(ProtectedSessionStorage storage)
         {
             _storage = storage;
-            _nav = nav;
         }
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
             try
             {
-                // Si estás con prerender desactivado (render-mode="Server"), no hará falta este guard.
-                // Lo dejo por seguridad; si hay prerender, devolvemos usuario no autenticado.
-                if (_nav.Uri is null)
+                var result = await _storage.GetAsync<AuthSession>(StorageKey);
+                var session = result.Success ? result.Value : null;
+                if (session is null)
                     return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
 
-                var result = await _storage.GetAsync<SessionUser>("auth");
-                var userSession = result.Success ? result.Value : null;
-
-                if (userSession is null || string.IsNullOrWhiteSpace(userSession.Username))
-                    return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
-
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name, userSession.Username)
-                };
-
-                var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, "auth"));
-                return new AuthenticationState(principal);
+                var identity = BuildIdentity(session);
+                return new AuthenticationState(new ClaimsPrincipal(identity));
             }
             catch
             {
@@ -46,36 +32,48 @@ namespace SistemaHotelAloha.Web.Auth
             }
         }
 
-        // ✅ Métodos que tus páginas ya intentan usar
-        public async Task SignInAsync(string username)
+        public async Task SignInAsync(int userId, string name, string email, string role = "User")
         {
-            var session = new SessionUser { Username = username ?? string.Empty };
-            await _storage.SetAsync("auth", session);
-            NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+            var session = new AuthSession
+            {
+                UserId = userId,
+                Name = string.IsNullOrWhiteSpace(name) ? email : name,
+                Email = email ?? "",
+                Role = string.IsNullOrWhiteSpace(role) ? "User" : role
+            };
+
+            await _storage.SetAsync(StorageKey, session);
+
+            var identity = BuildIdentity(session);
+            var authState = new AuthenticationState(new ClaimsPrincipal(identity));
+            NotifyAuthenticationStateChanged(Task.FromResult(authState));
         }
 
-        public async Task SignInAsync(string username, string password)
-        {
-            // Podés almacenar solo el username; la contraseña no se guarda por seguridad
-            var session = new SessionUser { Username = username ?? string.Empty };
-            await _storage.SetAsync("auth", session);
-
-            // Notifica a Blazor que el usuario cambió
-            NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
-        }
         public async Task SignOutAsync()
         {
-            await _storage.DeleteAsync("auth");
-            NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+            try { await _storage.DeleteAsync(StorageKey); } catch { }
+            var anon = new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+            NotifyAuthenticationStateChanged(Task.FromResult(anon));
         }
 
-        // (opcional) si en algún lado llamás este nombre
-        public Task UpdateAuthenticationState(SessionUser? session) =>
-            session is null ? SignOutAsync() : SignInAsync(session.Username);
-    }
+        private static ClaimsIdentity BuildIdentity(AuthSession s)
+        {
+            var claims = new List<Claim>
+            {
+                new(ClaimTypes.NameIdentifier, s.UserId.ToString()),
+                new(ClaimTypes.Name, s.Name ?? s.Email ?? "Usuario"),
+                new(ClaimTypes.Email, s.Email ?? ""),
+                new(ClaimTypes.Role, s.Role ?? "User")
+            };
+            return new ClaimsIdentity(claims, authenticationType: "SimpleAuth");
+        }
 
-    public class SessionUser
-    {
-        public string Username { get; set; } = string.Empty;
+        private sealed class AuthSession
+        {
+            public int UserId { get; set; }
+            public string? Name { get; set; }
+            public string? Email { get; set; }
+            public string? Role { get; set; }
+        }
     }
 }

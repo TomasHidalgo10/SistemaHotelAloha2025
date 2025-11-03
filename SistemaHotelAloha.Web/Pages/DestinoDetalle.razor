@@ -1,0 +1,143 @@
+﻿@page "/destino/{Id:int}"
+@using SistemaHotelAloha.AccesoDatos
+@using SistemaHotelAloha.AccesoDatos.Models
+@using System.Security.Claims
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+
+@inject ReservasAdoRepository Repo
+@inject AuthenticationStateProvider Auth
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<h3>Habitaciones del destino</h3>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <label class="form-label">Habitación</label>
+        <select class="form-select" @bind="_habId">
+            <option value="0">-- Elegir --</option>
+            @foreach (var h in _habitaciones)
+            {
+                <option value="@h.Id">@h.Nombre (cap: @h.Capacidad) — @h.PrecioNoche.ToString("C")</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Desde</label>
+        <input class="form-control" type="date" @bind="_desde" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Hasta</label>
+        <input class="form-control" type="date" @bind="_hasta" />
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Huésped (opcional)</label>
+        <input class="form-control" @bind="_huesped" placeholder="Nombre del huésped" />
+    </div>
+    <div class="col-md-12 d-flex gap-2">
+        <button class="btn btn-outline-secondary" @onclick="VerDisponibilidad">Ver disponibilidad</button>
+        <button class="btn btn-primary" @onclick="Reservar">Reservar</button>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(_mensaje))
+{
+    <div class="alert @(_disponible ? "alert-success" : "alert-danger") mt-2">
+        @_mensaje
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }  // id del destino (en nuestro repo es virtual, pero lo mantenemos)
+
+    private List<HabitacionDTO> _habitaciones = new();
+    private int _habId;
+    private DateTime _desde = DateTime.Today.AddDays(1);
+    private DateTime _hasta = DateTime.Today.AddDays(2);
+    private string? _huesped;
+    private bool _disponible;
+    private string? _mensaje;
+
+    protected override void OnInitialized()
+    {
+        // En nuestro repo el destino es virtual, pero dejamos la ruta para no romper URLs
+        _habitaciones = Repo.ListarHabitacionesPorDestino(Id).ToList();
+    }
+
+    private async Task VerDisponibilidad()
+    {
+        _mensaje = null;
+        if (!ValidarEntrada()) return;
+
+        try
+        {
+            _disponible = Repo.HabitacionDisponible(_habId, _desde, _hasta);
+            _mensaje = _disponible ? "Disponible para ese rango." : "No está disponible en ese rango.";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Disponibilidad] {ex}");
+            await JS.InvokeVoidAsync("alert", "No se pudo verificar disponibilidad.");
+        }
+    }
+
+    private async Task Reservar()
+    {
+        _mensaje = null;
+        if (!ValidarEntrada()) return;
+
+        // Necesitamos usuario logueado
+        var auth = await Auth.GetAuthenticationStateAsync();
+        var uidStr = auth.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(uidStr, out var idUsuario))
+        {
+            await JS.InvokeVoidAsync("alert", "Debés iniciar sesión para reservar.");
+            Nav.NavigateTo("/auth/login");
+            return;
+        }
+
+        try
+        {
+            // Si no escriben huésped, usamos el nombre del usuario o "Huésped"
+            var nombreUsuario = auth.User.Identity?.Name;
+            var huesped = string.IsNullOrWhiteSpace(_huesped) ? (nombreUsuario ?? "Huésped") : _huesped;
+
+            // 1) chequeo de disponibilidad
+            if (!Repo.HabitacionDisponible(_habId, _desde, _hasta))
+            {
+                _disponible = false;
+                _mensaje = "No está disponible en ese rango.";
+                return;
+            }
+
+            // 2) crear reserva — FIRMA NUEVA que pedía el parámetro faltante
+            var nuevaId = Repo.CrearReserva(idUsuario, _habId, huesped, _desde, _hasta);
+
+            _disponible = true;
+            _mensaje = $"Reserva #{nuevaId} creada.";
+            await JS.InvokeVoidAsync("alert", _mensaje);
+            Nav.NavigateTo("/reservas");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Reservar] {ex}");
+            await JS.InvokeVoidAsync("alert", "No se pudo crear la reserva.");
+        }
+    }
+
+    private bool ValidarEntrada()
+    {
+        if (_habId <= 0)
+        {
+            JS.InvokeVoidAsync("alert", "Elegí una habitación.");
+            return false;
+        }
+
+        if (_hasta <= _desde)
+        {
+            JS.InvokeVoidAsync("alert", "El rango de fechas es inválido.");
+            return false;
+        }
+        return true;
+    }
+}

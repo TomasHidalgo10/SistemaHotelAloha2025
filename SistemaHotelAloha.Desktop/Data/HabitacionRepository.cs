@@ -20,21 +20,17 @@ namespace SistemaHotelAloha.Desktop.Data
         {
             _items.Clear();
 
-            // Debe devolver: Id, Numero, TipoId, EstadoId, PrecioBase (+ opcional TipoNombre/EstadoNombre)
-            var dt = _ado.GetAll();
+            var dt = _ado.GetAll(); // DataTable con: Id, Numero, TipoHabitacion, Estado, PrecioBase
             foreach (DataRow row in dt.Rows)
             {
                 var h = new HabitacionModel
                 {
                     Id = Convert.ToInt32(row["Id"]),
                     Numero = row["Numero"] == DBNull.Value ? "" : row["Numero"]!.ToString()!,
-                    TipoId = Convert.ToInt32(row["TipoId"]),
-                    EstadoId = Convert.ToInt32(row["EstadoId"]),
-                    PrecioNoche = Convert.ToDecimal(row["PrecioBase"]),
-
-                    // Si tu modelo tiene estos campos de sólo lectura, descomentá:
-                    // TipoNombre   = row.Table.Columns.Contains("TipoNombre") ? row["TipoNombre"]?.ToString() ?? "" : "",
-                    // EstadoNombre = row.Table.Columns.Contains("EstadoNombre") ? row["EstadoNombre"]?.ToString() ?? "" : ""
+                    // Si tu enum es int en la DB:
+                    Tipo = row["TipoHabitacion"]?.ToString() ?? "Standard",
+                    Estado = row["Estado"]?.ToString() ?? "Disponible",
+                    PrecioNoche = Convert.ToDecimal(row["PrecioBase"])
                 };
                 _items.Add(h);
             }
@@ -43,38 +39,38 @@ namespace SistemaHotelAloha.Desktop.Data
 
         public HabitacionModel Create(HabitacionModel x)
         {
-            // Si en BD 'Numero' es INT, convertimos; si fuera VARCHAR, podés cambiar el ADO a aceptar string.
+            // Convertir Numero (string) a int de forma segura
             var numeroInt = int.TryParse(x.Numero, out var n) ? n : 0;
+
+            // Convertir Tipo (string) a int de forma segura (si se guarda como número en la BD)
+            var tipoInt = int.TryParse(x.Tipo, out var t) ? t : 0;
 
             var newId = _ado.Create(
                 numero: numeroInt,
-                tipoId: x.TipoId,     // YA es int
-                estadoId: x.EstadoId,   // YA es int
+                tipoHabitacion: tipoInt,
+                estado: string.IsNullOrWhiteSpace(x.Estado) ? "Disponible" : x.Estado,
                 precioBase: x.PrecioNoche
             );
 
             if (newId <= 0)
                 throw new InvalidOperationException("No se pudo insertar la habitación en la BD.");
 
-            // Refrescar y devolver la creada
+            // Refresca la lista desde la BD
             GetAll();
             return _items.First(i => i.Id == newId);
         }
 
         public void Update(HabitacionModel x)
         {
-            // Si en BD 'Numero' es INT:
+            // Conversión segura de string → int
             var numeroInt = int.TryParse(x.Numero, out var n) ? n : 0;
-
-            // Por si viene 0 y querés default "Disponible" por Id:
-            // var estadoId = x.EstadoId == 0 ? LookupService.EstadoIdByNombre("Disponible") : x.EstadoId;
-            var estadoId = x.EstadoId;
+            var tipoInt = int.TryParse(x.Tipo, out var t) ? t : 0;
 
             var rows = _ado.Update(
                 id: x.Id,
                 numero: numeroInt,
-                tipoId: x.TipoId,
-                estadoId: estadoId,
+                tipoHabitacion: tipoInt,
+                estado: string.IsNullOrWhiteSpace(x.Estado) ? "Disponible" : x.Estado,
                 precioBase: x.PrecioNoche
             );
 

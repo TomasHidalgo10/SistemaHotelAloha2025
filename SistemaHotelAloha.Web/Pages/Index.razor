@@ -1,122 +1,25 @@
 @page "/"
-@using System.ComponentModel.DataAnnotations
-@using Microsoft.AspNetCore.Components.Forms
 @inject NavigationManager Nav
 
-<div class="container py-4">
+<div class="position-relative overflow-hidden rounded-3 shadow" style="min-height: 62vh;">
+    <img src="/img/Home/fondo.png"
+         class="w-100 h-100 object-fit-cover"
+         alt="Hotel Aloha"
+         onerror="this.src='/img/Habitaciones/standart.jpg'" />
 
-    <!-- HERO: fondo degradado + vidrio -->
-    <section class="hero-aloha mb-4">
-        <div class="hero-inner">
-            <h1 class="display-5 fw-bold mb-2">Encontrá tu próxima estadía</h1>
-            <p class="lead m-0">Buscá hoteles, elegí fechas y reservá al instante.</p>
-        </div>
-    </section>
+    <div class="position-absolute top-0 start-0 w-100 h-100"
+         style="background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.65));"></div>
 
-    <!-- BUSCADOR -->
-    <div class="card card-glass p-4 mb-4">
-        <EditForm Model="_vm" OnValidSubmit="OnSearch">
-            <DataAnnotationsValidator />
-            <div class="row g-3 align-items-end">
-                <div class="col-lg-5">
-                    <label class="form-label">Destino</label>
-                    <InputText class="form-control form-control-lg" placeholder="Ej: Mendoza, Córdoba…" @bind-Value="_vm.Destino" />
-                    <ValidationMessage For="@(() => _vm.Destino)" />
-                </div>
-
-                <div class="col-sm-6 col-lg-2">
-                    <label class="form-label">Check-in</label>
-                    <InputDate class="form-control form-control-lg" @bind-Value="_vm.CheckIn" />
-                    <ValidationMessage For="@(() => _vm.CheckIn)" />
-                </div>
-
-                <div class="col-sm-6 col-lg-2">
-                    <label class="form-label">Check-out</label>
-                    <InputDate class="form-control form-control-lg" @bind-Value="_vm.CheckOut" />
-                    <ValidationMessage For="@(() => _vm.CheckOut)" />
-                </div>
-
-                <div class="col-lg-3 d-grid">
-                    <button type="submit" class="btn btn-primary btn-lg">Buscar</button>
-                </div>
-            </div>
-
-            @if (!string.IsNullOrWhiteSpace(_error))
-            {
-                <div class="alert alert-danger mt-3">@_error</div>
-            }
-        </EditForm>
-    </div>
-
-    <!-- DESTINOS DESTACADOS -->
-    <div class="mb-2 d-flex align-items-center gap-2">
-        <h5 class="m-0 text-muted">Destinos destacados</h5>
-        <div class="flex-grow-1 border-bottom border-opacity-25"></div>
-    </div>
-
-    <div class="row g-3">
-        @foreach (var d in _destacados)
-        {
-            <div class="col-12 col-sm-6 col-lg-3">
-                <button class="tile w-100 text-start" @onclick="() => SelectDestination(d)">
-                    <div class="tile-body">
-                        <div class="tile-title">@d</div>
-                        <div class="tile-sub">Ver hoteles</div>
-                    </div>
-                    <span class="tile-arrow">→</span>
-                </button>
-            </div>
-        }
+    <div class="position-absolute top-50 start-50 translate-middle text-center text-white px-3">
+        <h1 class="display-3 fw-bold mb-2">Hotel Aloha</h1>
+        <p class="lead mb-4">El mejor lugar para tus vacaciones</p>
+        <button class="btn btn-primary btn-lg" @onclick="GoHabitaciones">Reservar ahora</button>
     </div>
 </div>
 
 @code {
-    private readonly SearchVM _vm = new()
+    private void GoHabitaciones()
     {
-        CheckIn = DateTime.Today.AddDays(1),
-        CheckOut = DateTime.Today.AddDays(3)
-    };
-
-    private string? _error;
-
-    private void OnSearch()
-    {
-        _error = null;
-
-        if (_vm.CheckIn.HasValue && _vm.CheckOut.HasValue && _vm.CheckOut <= _vm.CheckIn)
-        {
-            _error = "La fecha de check-out debe ser posterior al check-in.";
-            return;
-        }
-
-        var destino = Uri.EscapeDataString(_vm.Destino ?? string.Empty);
-        var cin = _vm.CheckIn?.ToString("yyyy-MM-dd") ?? "";
-        var cout = _vm.CheckOut?.ToString("yyyy-MM-dd") ?? "";
-        var url = $"/buscar?destino={destino}&in={cin}&out={cout}";
-        Nav.NavigateTo(url, true);
+        Nav.NavigateTo("/habitaciones");
     }
-
-    private void SelectDestination(string destino)
-    {
-        _vm.Destino = destino;
-        OnSearch();
-    }
-
-    public class SearchVM
-    {
-        [Required(ErrorMessage = "Ingresá un destino")]
-        public string? Destino { get; set; }
-
-        [Required(ErrorMessage = "Elegí la fecha de check-in")]
-        public DateTime? CheckIn { get; set; }
-
-        [Required(ErrorMessage = "Elegí la fecha de check-out")]
-        public DateTime? CheckOut { get; set; }
-    }
-
-    // Mock (reemplazá por BD cuando quieras)
-    private readonly List<string> _destacados = new()
-  {
-    "Buenos Aires", "Córdoba", "Mendoza", "Bariloche"
-  };
 }

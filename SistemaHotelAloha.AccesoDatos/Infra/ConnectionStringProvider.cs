@@ -1,12 +1,13 @@
 using System;
+using System.IO;
 using Microsoft.Extensions.Configuration;
 
 namespace SistemaHotelAloha.AccesoDatos.Infra
 {
     /// <summary>
-    /// Lee la cadena "DefaultConnection" desde appsettings.json (copiado en la carpeta de salida)
-    /// y la cachea en memoria. Si no existe, usa la variable de entorno ALOHA_CONNECTION
-    /// y, como último recurso, una cadena por defecto a localhost.
+    /// Lee "ConnectionStrings:DefaultConnection" desde appsettings.json (copiado al output),
+    /// si no existe, usa la variable de entorno ALOHA_CONNECTION,
+    /// y como último recurso, una cadena local por defecto.
     /// </summary>
     public static class ConnectionStringProvider
     {
@@ -15,34 +16,45 @@ namespace SistemaHotelAloha.AccesoDatos.Infra
         public static string Get()
         {
             if (!string.IsNullOrWhiteSpace(_cached))
-                return _cached;
+                return _cached!;
 
-            // En Desktop, appsettings.json ya se copia a bin/ (PreserveNewest),
-            // por lo que AppContext.BaseDirectory es la base correcta.
-            var basePath = AppContext.BaseDirectory;
-
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(basePath)
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false);
-
-            var config = builder.Build();
-
-            var cs = config.GetConnectionString("DefaultConnection");
-
-            if (string.IsNullOrWhiteSpace(cs))
+            // 1) Variable de entorno (tiene prioridad si está definida)
+            var env = Environment.GetEnvironmentVariable("ALOHA_CONNECTION");
+            if (!string.IsNullOrWhiteSpace(env))
             {
-                // fallback a variable de entorno
-                cs = Environment.GetEnvironmentVariable("ALOHA_CONNECTION");
+                _cached = env!;
+                return _cached!;
             }
 
-            if (string.IsNullOrWhiteSpace(cs))
+            // 2) appsettings.json (en la carpeta del ejecutable)
+            try
             {
-                // último fallback (útil en desarrollo)
-                cs = "Server=127.0.0.1;Database=ALOHA_DB;Uid=root;Pwd=root;Port=3306";
+                var basePath = AppContext.BaseDirectory;
+                var jsonPath = Path.Combine(basePath, "appsettings.json");
+
+                if (File.Exists(jsonPath))
+                {
+                    var cfg = new ConfigurationBuilder()
+                        .SetBasePath(basePath)
+                        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+                        .Build();
+
+                    var cs = cfg.GetConnectionString("DefaultConnection");
+                    if (!string.IsNullOrWhiteSpace(cs))
+                    {
+                        _cached = cs!;
+                        return _cached!;
+                    }
+                }
+            }
+            catch
+            {
+                // Ignorar y caer al fallback
             }
 
-            _cached = cs;
-            return cs;
+            // 3) Fallback (desarrollo)
+            _cached = "Server=127.0.0.1;Port=3306;Database=aloha_db;Uid=root;Pwd=root;AllowPublicKeyRetrieval=true;SslMode=None";
+            return _cached!;
         }
 
         public static string GetDefault() => Get();

@@ -4,83 +4,70 @@ namespace SistemaHotelAloha.Desktop.Forms
 {
     partial class Home
     {
-       
         private System.ComponentModel.IContainer components = null;
+        private Button btnUsuarios;
+        private Button btnHabitaciones;
+        private Button btnReservas;
+        private Button btnServicios;
 
-      
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
-        {
-            if (disposing && (components != null))
-            {
-                components.Dispose();
-            }
-            base.Dispose(disposing);
-        }
+        { if (disposing && (components != null)) components.Dispose(); base.Dispose(disposing); }
 
-        #region Windows Form Designer generated code
-
-        /// <summary>
-        ///  Required method for Designer support - do not modify
-        ///  the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
-            btnGestionUsuarios = new Button();
-            btnGestionServicios = new Button();
-            btnGestionHabitaciones = new Button();
-            SuspendLayout();
+            this.btnUsuarios = new System.Windows.Forms.Button();
+            this.btnHabitaciones = new System.Windows.Forms.Button();
+            this.btnReservas = new System.Windows.Forms.Button();
+            this.btnServicios = new System.Windows.Forms.Button();
+            this.SuspendLayout();
             // 
-            // btnGestionUsuarios
+            // btnUsuarios
             // 
-            btnGestionUsuarios.Location = new Point(30, 30);
-            btnGestionUsuarios.Name = "btnGestionUsuarios";
-            btnGestionUsuarios.Size = new Size(240, 50);
-            btnGestionUsuarios.TabIndex = 0;
-            btnGestionUsuarios.Text = "Gestión de Usuarios";
-            btnGestionUsuarios.UseVisualStyleBackColor = true;
-            btnGestionUsuarios.Click += btnGestionUsuarios_Click;
+            this.btnUsuarios.Location = new System.Drawing.Point(24, 22);
+            this.btnUsuarios.Name = "btnUsuarios";
+            this.btnUsuarios.Size = new System.Drawing.Size(220, 42);
+            this.btnUsuarios.Text = "Gestión de Usuarios";
+            this.btnUsuarios.UseVisualStyleBackColor = true;
+            this.btnUsuarios.Click += new System.EventHandler(this.btnUsuarios_Click);
             // 
-            // btnGestionServicios
+            // btnHabitaciones
             // 
-            btnGestionServicios.Location = new Point(30, 100);
-            btnGestionServicios.Name = "btnGestionServicios";
-            btnGestionServicios.Size = new Size(240, 50);
-            btnGestionServicios.TabIndex = 1;
-            btnGestionServicios.Text = "Gestión de Servicios Adicionales";
-            btnGestionServicios.UseVisualStyleBackColor = true;
-            btnGestionServicios.Click += btnGestionServicios_Click;
+            this.btnHabitaciones.Location = new System.Drawing.Point(24, 78);
+            this.btnHabitaciones.Name = "btnHabitaciones";
+            this.btnHabitaciones.Size = new System.Drawing.Size(220, 42);
+            this.btnHabitaciones.Text = "Gestión de Habitaciones";
+            this.btnHabitaciones.UseVisualStyleBackColor = true;
+            this.btnHabitaciones.Click += new System.EventHandler(this.btnHabitaciones_Click);
             // 
-            // btnGestionHabitaciones
+            // btnReservas
             // 
-            btnGestionHabitaciones.Location = new Point(30, 170);
-            btnGestionHabitaciones.Name = "btnGestionHabitaciones";
-            btnGestionHabitaciones.Size = new Size(240, 50);
-            btnGestionHabitaciones.TabIndex = 2;
-            btnGestionHabitaciones.Text = "Gestión de Habitaciones";
-            btnGestionHabitaciones.UseVisualStyleBackColor = true;
-            btnGestionHabitaciones.Click += btnGestionHabitaciones_Click;
+            this.btnReservas.Location = new System.Drawing.Point(24, 134);
+            this.btnReservas.Name = "btnReservas";
+            this.btnReservas.Size = new System.Drawing.Size(220, 42);
+            this.btnReservas.Text = "Gestión de Reservas";
+            this.btnReservas.UseVisualStyleBackColor = true;
+            this.btnReservas.Click += new System.EventHandler(this.btnReservas_Click);
+            // 
+            // btnServicios
+            // 
+            this.btnServicios.Location = new System.Drawing.Point(24, 190);
+            this.btnServicios.Name = "btnServicios";
+            this.btnServicios.Size = new System.Drawing.Size(220, 42);
+            this.btnServicios.Text = "Servicios Adicionales";
+            this.btnServicios.UseVisualStyleBackColor = true;
+            this.btnServicios.Click += new System.EventHandler(this.btnServicios_Click);
             // 
             // Home
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
-            AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(304, 261);
-            Controls.Add(btnGestionHabitaciones);
-            Controls.Add(btnGestionServicios);
-            Controls.Add(btnGestionUsuarios);
-            FormBorderStyle = FormBorderStyle.FixedDialog;
-            MaximizeBox = false;
-            Name = "Home";
-            StartPosition = FormStartPosition.CenterScreen;
-            Text = "Home - Hotel ALOHA";
-            ResumeLayout(false);
+            this.ClientSize = new System.Drawing.Size(270, 248);
+            this.Controls.Add(this.btnServicios);
+            this.Controls.Add(this.btnReservas);
+            this.Controls.Add(this.btnHabitaciones);
+            this.Controls.Add(this.btnUsuarios);
+            this.Name = "Home";
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.Text = "Aloha Desktop";
+            this.ResumeLayout(false);
         }
-
-        #endregion
-
-        private Button btnGestionUsuarios;
-        private Button btnGestionServicios;
-        private Button btnGestionHabitaciones;
     }
 }

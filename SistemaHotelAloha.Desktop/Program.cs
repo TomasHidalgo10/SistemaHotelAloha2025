@@ -1,4 +1,6 @@
-using SistemaHotelAloha.AccesoDatos.Infra;
+ï»¿using SistemaHotelAloha.AccesoDatos.Infra;
+using SistemaHotelAloha.Desktop.Forms;
+using SistemaHotelAloha.Desktop.Utils;
 
 namespace SistemaHotelAloha.Desktop
 {
@@ -7,22 +9,11 @@ namespace SistemaHotelAloha.Desktop
         [STAThread]
         static void Main()
         {
-            // 1) Asegurar BD + Tablas antes de abrir el Home
-            try
-            {
-                DatabaseBootstrapper.EnsureCreated();
-            }
-            catch (Exception ex)
-            {
-                // Si algo falla, lo mostramos y detenemos para que sepas qué pasó
-                MessageBox.Show($"Error inicializando la base de datos:\n\n{ex.Message}",
-                    "ALOHA_DB", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
+            Application.ThreadException += (s, e) =>
+                MessageBox.Show(e.Exception.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
-            // 2) Iniciar UI
             ApplicationConfiguration.Initialize();
-            Application.Run(new Forms.Home());
+            Application.Run(new Home());
         }
     }
 }

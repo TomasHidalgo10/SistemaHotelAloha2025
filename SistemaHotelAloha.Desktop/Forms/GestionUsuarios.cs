@@ -1,245 +1,142 @@
+using MySql.Data.MySqlClient;
+using SistemaHotelAloha.Desktop.Data;
+using SistemaHotelAloha.Desktop.Helpers;
+using SistemaHotelAloha.Desktop.Models;
 using System;
+using System.Data;
 using System.Linq;
 using System.Windows.Forms;
-using SistemaHotelAloha.Desktop.Data;
-using SistemaHotelAloha.Desktop.Models;
 
-namespace SistemaHotelAloha.Desktop.Forms   // ⚠️ Si tu Designer usa otro namespace, copiá ese aquí.
+namespace SistemaHotelAloha.Desktop.Forms
 {
-    // ⚠️ Debe ser 'partial' y coincidir exactamente con la clase del Designer:
-    // mira la primera línea de GestionUsuarios.Designer.cs (namespace y nombre de clase).
     public partial class GestionUsuarios : Form
     {
-        private readonly UsuarioRepository _repo = new UsuarioRepository();
-
-        // =========================
-        //  ALIAS PARA CONTROLES
-        // =========================
-
-        // DataGridView de usuarios
-        private DataGridView? GridUsuarios =>
-            this.Controls.Find("gridUsuarios", true).OfType<DataGridView>().FirstOrDefault()
-         ?? this.Controls.Find("dgvUsuarios", true).OfType<DataGridView>().FirstOrDefault()
-         ?? this.Controls.Find("dataGridView1", true).OfType<DataGridView>().FirstOrDefault()
-         ?? this.Controls.OfType<DataGridView>().FirstOrDefault();
-
-        // ComboBox de roles
-        private ComboBox? CmbRol =>
-            this.Controls.Find("cmbRol", true).OfType<ComboBox>().FirstOrDefault()
-         ?? this.Controls.Find("cbRol", true).OfType<ComboBox>().FirstOrDefault()
-         ?? this.Controls.Find("comboBox1", true).OfType<ComboBox>().FirstOrDefault()
-         ?? this.Controls.OfType<ComboBox>().FirstOrDefault();
-
-        // TextBox Nombre
-        private TextBox? TxtNombre =>
-            this.Controls.Find("txtNombre", true).OfType<TextBox>().FirstOrDefault()
-         ?? this.Controls.Find("txtNombre2", true).OfType<TextBox>().FirstOrDefault()
-         ?? this.Controls.Find("txtUserName", true).OfType<TextBox>().FirstOrDefault()
-         ?? this.Controls.OfType<TextBox>().FirstOrDefault();
-
-        // TextBox Email
-        private TextBox? TxtEmail =>
-            this.Controls.Find("txtEmail", true).OfType<TextBox>().FirstOrDefault()
-         ?? this.Controls.Find("txtCorreo", true).OfType<TextBox>().FirstOrDefault()
-         ?? this.Controls.Find("txtMail", true).OfType<TextBox>().FirstOrDefault()
-         ?? this.Controls.OfType<TextBox>().Skip(1).FirstOrDefault(); // fallback: 2º textbox
-
-        // TextBox Rol (si usas TextBox en lugar de ComboBox)
-        private TextBox? TxtRol =>
-            this.Controls.Find("txtRol", true).OfType<TextBox>().FirstOrDefault()
-         ?? this.Controls.Find("txtRole", true).OfType<TextBox>().FirstOrDefault()
-         ?? this.Controls.OfType<TextBox>().LastOrDefault();
+        private DataTable _dt = new();
 
         public GestionUsuarios()
         {
-            InitializeComponent();    // ← ahora compila si NAMESPACE y CLASS coinciden con el Designer
-            CargarUsuarios();
+            InitializeComponent();
         }
 
-        // ===============================
-        //   MÉTODOS AUXILIARES
-        // ===============================
 
-        private void CargarUsuarios()
+        private void GestionUsuarios_Load(object sender, EventArgs e)
         {
-            var lista = _repo.GetAll();
-            if (GridUsuarios is null) return;
-            GridUsuarios.DataSource = null;
-            GridUsuarios.DataSource = lista;
+            Cargar();
+            dgv.ClearSelection();
+            Habilitar(false);
         }
 
-        private void LimpiarFormulario()
+        private void Cargar()
         {
-            if (TxtNombre is not null) TxtNombre.Clear();
-            if (TxtEmail is not null) TxtEmail.Clear();
-            if (TxtRol is not null) TxtRol.Clear();
-            GridUsuarios?.ClearSelection();
+            try
+            {
+                using var cn = Db.Conn(); cn.Open();
+                using var cmd = new MySqlCommand("sp_usuarios_listar", cn) { CommandType = CommandType.StoredProcedure };
+                using var da = new MySqlDataAdapter(cmd);
+                _dt = new DataTable();
+                da.Fill(_dt);
+                dgv.DataSource = _dt;
+            }
+            catch (MySqlException ex)
+            {
+                MessageBox.Show($"MySQL: {ex.Message}", "BD", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
-        private Usuario? GetUsuarioFromInputs(bool includeId = false)
+        private void dgv_SelectionChanged(object? sender, EventArgs e) => Habilitar(dgv.CurrentRow != null);
+
+        private void Habilitar(bool on)
         {
-            var nombre = (TxtNombre?.Text ?? "").Trim();
-            var email = (TxtEmail?.Text ?? "").Trim();
-            var rolSel = (CmbRol?.SelectedItem?.ToString() ?? "").Trim();
-            var rolTxt = (TxtRol?.Text ?? "").Trim();
-            var rol = string.IsNullOrWhiteSpace(rolSel) ? rolTxt : rolSel;
-
-            if (string.IsNullOrWhiteSpace(nombre) ||
-                string.IsNullOrWhiteSpace(email) ||
-                string.IsNullOrWhiteSpace(rol))
-            {
-                MessageBox.Show("Completá nombre, email y rol.", "Validación",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return null;
-            }
-
-            if (!email.Contains("@") || !email.Contains("."))
-            {
-                MessageBox.Show("Email inválido.", "Validación",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return null;
-            }
-
-            var u = new Usuario
-            {
-                Nombre = nombre,
-                Email = email,
-                Rol = string.IsNullOrWhiteSpace(rol) ? "Usuario" : rol
-            };
-
-            if (includeId)
-            {
-                if (GridUsuarios?.CurrentRow?.DataBoundItem is Usuario sel)
-                {
-                    u.Id = sel.Id;
-                }
-                else
-                {
-                    MessageBox.Show("Seleccioná un usuario de la lista.", "Validación",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return null;
-                }
-            }
-
-            return u;
+            btnEditar.Enabled = on;
+            btnEliminar.Enabled = on;
         }
 
-        // ===============================
-        //   BOTONES CRUD
-        // ===============================
+        private void SeleccionarUltimo()
+        {
+            if (dgv.Rows.Count == 0) return;
+            int i = dgv.Rows.Count - 1;
+            dgv.Rows[i].Selected = true;
+            dgv.CurrentCell = dgv.Rows[i].Cells[0];
+        }
+
+        private void SeleccionarPorId(int id)
+        {
+            foreach (DataGridViewRow r in dgv.Rows)
+            {
+                if (r.DataBoundItem is DataRowView drv && Convert.ToInt32(drv.Row["id"]) == id)
+                { r.Selected = true; dgv.CurrentCell = r.Cells[0]; break; }
+            }
+        }
 
         private void btnCrear_Click(object sender, EventArgs e)
         {
-            var u = GetUsuarioFromInputs();
-            if (u is null) return;
+            using var dlg = new UsuarioEditForm();
+            if (dlg.ShowDialog(this) != DialogResult.OK) return;
 
             try
             {
-                _repo.Create(u);
-                CargarUsuarios();
-                LimpiarFormulario();
-                MessageBox.Show("Usuario creado correctamente.",
-                    "Usuarios", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                using var cn = Db.Conn(); cn.Open();
+                using var cmd = new MySqlCommand("sp_usuario_crear", cn) { CommandType = CommandType.StoredProcedure };
+                cmd.Parameters.AddWithValue("@p_nombre", dlg.Nombre);
+                cmd.Parameters.AddWithValue("@p_email", dlg.Email);
+                cmd.Parameters.AddWithValue("@p_activo", dlg.Activo);
+                cmd.Parameters.AddWithValue("@p_role_id", dlg.RolId);
+                cmd.ExecuteNonQuery();
+                Cargar(); // refresca
             }
-            catch (InvalidOperationException ex)
-            {
-                MessageBox.Show(ex.Message, "Usuarios",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error al crear usuario:\n\n" + ex.Message,
-                    "Usuarios", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            catch (Exception ex) { MessageBox.Show(ex.Message, "Crear usuario", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
 
-        private void btnActualizar_Click(object sender, EventArgs e)
+        private void btnEditar_Click(object sender, EventArgs e)
         {
-            var u = GetUsuarioFromInputs(includeId: true);
-            if (u is null) return;
+            if (dgv.CurrentRow == null) return;
+            var row = ((DataRowView)dgv.CurrentRow.DataBoundItem).Row;
+            int id = Convert.ToInt32(row["id"]);
+
+            using var dlg = new UsuarioEditForm(
+                id,
+                row["nombre"].ToString() ?? "",
+                row["email"].ToString() ?? "",
+                row.Table.Columns.Contains("activo") && (row["activo"].ToString() == "1" || row["activo"].ToString()?.ToLower() == "true")
+            );
+            if (dlg.ShowDialog(this) != DialogResult.OK) return;
 
             try
             {
-                _repo.Update(u);
-                CargarUsuarios();
-                MessageBox.Show("Usuario actualizado correctamente.",
-                    "Usuarios", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                using var cn = Db.Conn(); cn.Open();
+                using var cmd = new MySqlCommand("sp_usuario_actualizar", cn) { CommandType = CommandType.StoredProcedure };
+                cmd.Parameters.AddWithValue("@p_id", id);
+                cmd.Parameters.AddWithValue("@p_nombre", dlg.Nombre);
+                cmd.Parameters.AddWithValue("@p_email", dlg.Email);
+                cmd.Parameters.AddWithValue("@p_activo", dlg.Activo);
+                cmd.Parameters.AddWithValue("@p_role_id", dlg.RolId);
+                cmd.ExecuteNonQuery();
+                Cargar();
             }
-            catch (InvalidOperationException ex)
-            {
-                MessageBox.Show(ex.Message, "Usuarios",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error al actualizar usuario:\n\n" + ex.Message,
-                    "Usuarios", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            catch (Exception ex) { MessageBox.Show(ex.Message, "Editar usuario", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
 
         private void btnEliminar_Click(object sender, EventArgs e)
         {
-            if (GridUsuarios?.CurrentRow?.DataBoundItem is not Usuario sel)
-            {
-                MessageBox.Show("Seleccioná un usuario para eliminar.",
-                    "Usuarios", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
+            if (dgv.CurrentRow == null) return;
+            var row = ((DataRowView)dgv.CurrentRow.DataBoundItem).Row;
+            int id = Convert.ToInt32(row["id"]);
 
-            var confirmar = MessageBox.Show(
-                $"¿Seguro que querés eliminar a {sel.Nombre}?",
-                "Confirmar eliminación",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-            if (confirmar != DialogResult.Yes) return;
+            if (MessageBox.Show($"¿Eliminar usuario #{id}?", "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
 
             try
             {
-                _repo.Delete(sel.Id);
-                CargarUsuarios();
-                LimpiarFormulario();
-                MessageBox.Show("Usuario eliminado correctamente.",
-                    "Usuarios", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                using var cn = Db.Conn(); cn.Open();
+                using var cmd = new MySqlCommand("sp_usuario_eliminar", cn) { CommandType = CommandType.StoredProcedure };
+                cmd.Parameters.AddWithValue("@p_id", id);
+                cmd.ExecuteNonQuery();
+                Cargar();
             }
-            catch (InvalidOperationException ex)
-            {
-                MessageBox.Show(ex.Message, "Usuarios",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error al eliminar usuario:\n\n" + ex.Message,
-                    "Usuarios", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void gridUsuarios_SelectionChanged(object sender, EventArgs e)
-        {
-            if (GridUsuarios?.CurrentRow?.DataBoundItem is Usuario u)
-            {
-                if (TxtNombre is not null) TxtNombre.Text = u.Nombre;
-                if (TxtEmail is not null) TxtEmail.Text = u.Email;
-                if (TxtRol is not null) TxtRol.Text = u.Rol;
-            }
-        }
-
-        // ===============================
-        //   HANDLERS REFERENCIADOS EN EL DESIGNER (puentes)
-        // ===============================
-
-        private void dgvUsuarios_SelectionChanged(object sender, EventArgs e)
-        {
-            gridUsuarios_SelectionChanged(sender, e);
-        }
-
-        private void btnModificar_Click(object sender, EventArgs e)
-        {
-            btnActualizar_Click(sender, e);
-        }
-
-        private void GestionUsuarios_Load(object sender, EventArgs e)
-        {
-            CargarUsuarios();
+            catch (Exception ex) { MessageBox.Show(ex.Message, "Eliminar usuario", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
     }
 }

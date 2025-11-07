@@ -1,13 +1,12 @@
 using System;
-using System.IO;
 using Microsoft.Extensions.Configuration;
 
 namespace SistemaHotelAloha.AccesoDatos.Infra
 {
     /// <summary>
-    /// Lee "ConnectionStrings:DefaultConnection" desde appsettings.json (copiado al output),
-    /// si no existe, usa la variable de entorno ALOHA_CONNECTION,
-    /// y como último recurso, una cadena local por defecto.
+    /// Lee la cadena "DefaultConnection" desde appsettings.json (copiado en la carpeta de salida)
+    /// y la cachea en memoria. Si no existe, usa la variable de entorno ALOHA_CONNECTION
+    /// y, como último recurso, una cadena por defecto a localhost.
     /// </summary>
     public static class ConnectionStringProvider
     {
@@ -15,48 +14,35 @@ namespace SistemaHotelAloha.AccesoDatos.Infra
 
         public static string Get()
         {
+            // Si ya se leyó previamente, devolver desde memoria
             if (!string.IsNullOrWhiteSpace(_cached))
                 return _cached!;
 
-            // 1) Variable de entorno (tiene prioridad si está definida)
-            var env = Environment.GetEnvironmentVariable("ALOHA_CONNECTION");
-            if (!string.IsNullOrWhiteSpace(env))
-            {
-                _cached = env!;
-                return _cached!;
-            }
+            // 1) Base path: carpeta del ejecutable (Desktop / Web)
+            var basePath = AppContext.BaseDirectory;
 
-            // 2) appsettings.json (en la carpeta del ejecutable)
-            try
-            {
-                var basePath = AppContext.BaseDirectory;
-                var jsonPath = Path.Combine(basePath, "appsettings.json");
+            // 2) Intentar leer appsettings.json (como hacía Nico)
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(basePath)
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false);
 
-                if (File.Exists(jsonPath))
-                {
-                    var cfg = new ConfigurationBuilder()
-                        .SetBasePath(basePath)
-                        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-                        .Build();
+            var config = builder.Build();
+            var cs = config.GetConnectionString("DefaultConnection");
 
-                    var cs = cfg.GetConnectionString("DefaultConnection");
-                    if (!string.IsNullOrWhiteSpace(cs))
-                    {
-                        _cached = cs!;
-                        return _cached!;
-                    }
-                }
-            }
-            catch
-            {
-                // Ignorar y caer al fallback
-            }
+            // 3) Si no hay cadena en JSON, probar con variable de entorno
+            if (string.IsNullOrWhiteSpace(cs))
+                cs = Environment.GetEnvironmentVariable("ALOHA_CONNECTION");
 
-            // 3) Fallback (desarrollo)
-            _cached = "Server=127.0.0.1;Port=3306;Database=aloha_db;Uid=root;Pwd=root;AllowPublicKeyRetrieval=true;SslMode=None";
+            // 4) Fallback final (idéntico al de Nico, respetando formato)
+            if (string.IsNullOrWhiteSpace(cs))
+                cs = "Server=127.0.0.1;Database=ALOHA_DB;Uid=root;Pwd=root;Port=3306";
+
+            // 5) Cachear y devolver
+            _cached = cs!;
             return _cached!;
         }
 
+        // Alias (para compatibilidad)
         public static string GetDefault() => Get();
     }
 }

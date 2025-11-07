@@ -6,8 +6,10 @@ namespace SistemaHotelAloha.AccesoDatos.Infra
     {
         public static MySqlConnection Create()
         {
-           
-            var connectionString = ConnectionStringProvider.Get();
+            // Para MySql.Data (Oracle)
+            var connectionString =
+                "server=localhost;port=3306;database=aloha_db;uid=root;pwd=root;AllowPublicKeyRetrieval=true";
+
             return new MySqlConnection(connectionString);
         }
     }

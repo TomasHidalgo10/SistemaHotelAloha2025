@@ -2,9 +2,11 @@
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using SistemaHotelAloha.AccesoDatos;
 using SistemaHotelAloha.Web.Auth;
+using SistemaHotelAloha.Web.Endpoints;
+
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddScoped<ReservasAdoRepository>();
 // Blazor
 builder.Services.AddRazorPages();
 builder.Services
@@ -33,6 +35,12 @@ builder.Services.AddScoped(_ => new ReservasAdoRepository(conn));
 
 var app = builder.Build();
 
+app.MapPdfEndpoints(); // 👈 agrega el endpoint /pdf/reserva/{id}
+
+app.MapBlazorHub();
+app.MapFallbackToPage("/_Host");
+app.Run();
+
 // Pipeline
 if (app.Environment.IsDevelopment())
 {
@@ -51,7 +59,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();       
+app.MapControllers();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 

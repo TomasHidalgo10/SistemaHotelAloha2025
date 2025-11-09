@@ -5,25 +5,16 @@ using SistemaHotelAloha.Web.Auth;
 using SistemaHotelAloha.Web.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// -------------------------
-// Servicios
-// -------------------------
 builder.Services.AddScoped<ReservasAdoRepository>();
-
 // Blazor
 builder.Services.AddRazorPages();
 builder.Services
     .AddServerSideBlazor()
     .AddCircuitOptions(o => o.DetailedErrors = true);
 
-// Auth (estado en Blazor) + storage protegido
-builder.Services.AddAuthorizationCore();      // para <AuthorizeView/> en Blazor
-builder.Services.AddScoped<ProtectedSessionStorage>();
-builder.Services.AddScoped<ProtectedLocalStorage>();
-
-// Registramos el provider como sí mismo y como AuthenticationStateProvider (misma instancia)
-builder.Services.AddScoped<SimpleAuthStateProvider>();
+// Autenticación “simple” para Blazor
+builder.Services.AddAuthorizationCore();
+builder.Services.AddScoped<SimpleAuthStateProvider>(); // <-- el tuyo
 builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
     sp.GetRequiredService<SimpleAuthStateProvider>());
 
@@ -39,37 +30,19 @@ builder.Services.AddScoped(_ => new ReservasAdoRepository(conn));
 
 var app = builder.Build();
 
-// -------------------------
-// Pipeline
-// -------------------------
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-}
-else
+if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
-
-// **CLAVE**: servir archivos estáticos (wwwroot/img, css, js) ANTES de UseRouting
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 
-// Si en el futuro protegés endpoints MVC con [Authorize], podés habilitar:
-// app.UseAuthentication();
-// app.UseAuthorization();
-
-// -------------------------
-// Endpoints
-// -------------------------
-app.MapControllers();                 // para /pdf/... y otros controllers
-app.MapPdfEndpoints();                // tu extensión: /pdf/reserva/{id}
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 
-// ÚNICO app.Run()
 app.Run();

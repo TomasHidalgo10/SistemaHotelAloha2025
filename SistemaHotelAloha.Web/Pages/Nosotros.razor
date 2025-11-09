@@ -3,16 +3,8 @@
 
 <!-- HERO -->
 <div class="position-relative overflow-hidden rounded-3 mb-4" style="min-height: 320px;">
-<<<<<<< HEAD
-    <!-- IMPORTANTE: ruta relativa a wwwroot -->
-    <img src="img/Hotel/lobby.jpg"
-         class="w-100 h-100 object-fit-cover"
-         alt="Hotel Aloha - Lobby"
-         onerror="this.src='img/Home/fondo.png'">
-=======
     <img src="/img/Hotel/lobby.jpg" class="w-100 h-100 object-fit-cover" alt="Hotel Aloha"
          onerror="this.src='/img/Habitaciones/standart.jpg'">
->>>>>>> ef42a07a7f53aa4fa6b0d506d700d6e396df88ef
     <div class="position-absolute top-0 start-0 w-100 h-100"
          style="background: linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,.65));"></div>
     <div class="position-absolute top-50 start-50 translate-middle text-center text-white px-3">
@@ -46,16 +38,6 @@
         {
             <div class="col">
                 <div class="card h-100 shadow-sm">
-<<<<<<< HEAD
-                    <img src="@i.Img"
-                         class="card-img-top object-fit-cover"
-                         style="height: 180px;"
-                         alt="@i.Titulo"
-                         onerror="this.src='img/Home/fondo.png'">
-=======
-                    <img src="@i.Img" class="card-img-top object-fit-cover" style="height: 180px;"
-                         alt="@i.Titulo" onerror="this.src='/img/Habitaciones/standart.jpg'">
->>>>>>> ef42a07a7f53aa4fa6b0d506d700d6e396df88ef
                     <div class="card-body">
                         <h5 class="card-title">@i.Titulo</h5>
                         <p class="card-text text-muted">@i.Desc</p>
@@ -78,16 +60,6 @@
         {
             <div class="col">
                 <div class="card h-100 shadow-sm">
-<<<<<<< HEAD
-                    <img src="@h.Img"
-                         class="card-img-top object-fit-cover"
-                         style="height: 180px;"
-                         alt="@h.Titulo"
-                         onerror="this.src='img/Home/fondo.png'">
-=======
-                    <img src="@h.Img" class="card-img-top object-fit-cover" style="height: 180px;"
-                         alt="@h.Titulo" onerror="this.src='/img/Habitaciones/standart.jpg'">
->>>>>>> ef42a07a7f53aa4fa6b0d506d700d6e396df88ef
                     <div class="card-body">
                         <h5 class="card-title">@h.Titulo</h5>
                         <p class="card-text text-muted">@h.Desc</p>
@@ -151,46 +123,17 @@
 @code {
     private void GoHabitaciones() => Nav.NavigateTo("/habitaciones");
 
-<<<<<<< HEAD
     // Rutas EXACTAS según tu captura:
     // wwwroot/img/Hotel/{cochera,gimnasio,lobby,piscina,resto}.jpg
     // wwwroot/img/Habitaciones/{doble,standart,suite}.jpg
 
     private readonly List<Card> _instalaciones = new()
-    {
-        new("img/Hotel/lobby.jpg",   "Lobby & Recepción", "Espacio amplio con sillones, café de cortesía y asistencia 24/7."),
-        new("img/Hotel/piscina.jpg", "Piscina",           "Piscina climatizada con solárium y toallas disponibles."),
-        new("img/Hotel/gimnasio.jpg","Gimnasio",          "Equipamiento completo para mantener tu rutina."),
-        // No tenés salon.jpg -> usamos lobby.jpg para “Salón de eventos”
-        new("img/Hotel/lobby.jpg",   "Salón de eventos",  "Ideal para reuniones y capacitaciones (hasta 60 personas)."),
-        new("img/Hotel/resto.jpg",   "Restó & Bar",       "Desayuno buffet y carta con opciones locales."),
-        new("img/Hotel/cochera.jpg", "Cochera",           "Cochera cubierta con acceso directo al lobby."),
-    };
-
-    private readonly List<RoomCard> _habitaciones = new()
-    {
-        new("img/Habitaciones/standart.jpg", "Standard", "Confort esencial para 1-2 personas.", "Capacidad: 2 pax"),
-        new("img/Habitaciones/doble.jpg",    "Doble",    "Dos camas individuales y espacio extra.", "Capacidad: 2-3 pax"),
-        new("img/Habitaciones/suite.jpg",    "Suite",    "Ambiente amplio con living y vista.", "Capacidad: 2-4 pax"),
-    };
-=======
-    private readonly List<Card> _instalaciones = new()
   {
-    new("/img/Hotel/lobby.jpg", "Lobby & Recepción", "Espacio amplio con sillones, café de cortesía y asistencia 24/7."),
-    new("/img/Hotel/piscina.jpg", "Piscina", "Piscina climatizada con solárium y toallas disponibles."),
-    new("/img/Hotel/gimnasio.jpg", "Gimnasio", "Equipamiento completo para mantener tu rutina."),
-    new("/img/Hotel/salon.jpg", "Salón de eventos", "Ideal para reuniones y capacitaciones (hasta 60 personas)."),
-    new("/img/Hotel/resto.jpg", "Restó & Bar", "Desayuno buffet y carta con opciones locales."),
-    new("/img/Hotel/cochera.jpg", "Cochera", "Cochera cubierta con acceso directo al lobby."),
   };
 
     private readonly List<RoomCard> _habitaciones = new()
   {
-    new("/img/Habitaciones/standart.jpg", "Standard", "Confort esencial para 1-2 personas.", "Capacidad: 2 pax"),
-    new("/img/Habitaciones/doble.jpg", "Doble", "Dos camas individuales y espacio extra.", "Capacidad: 2-3 pax"),
-    new("/img/Habitaciones/suite.jpg", "Suite", "Ambiente amplio con living y vista.", "Capacidad: 2-4 pax"),
   };
->>>>>>> ef42a07a7f53aa4fa6b0d506d700d6e396df88ef
 
     private record Card(string Img, string Titulo, string Desc);
     private record RoomCard(string Img, string Titulo, string Desc, string Capacidad);

@@ -1,0 +1,163 @@
+﻿@page "/nosotros"
+@inject NavigationManager Nav
+
+<!-- HERO -->
+<div class="position-relative overflow-hidden rounded-3 mb-4" style="min-height: 320px;">
+    <!-- IMPORTANTE: ruta relativa a wwwroot -->
+    <img src="img/Hotel/lobby.jpg"
+         class="w-100 h-100 object-fit-cover"
+         alt="Hotel Aloha - Lobby"
+         onerror="this.src='img/Home/fondo.png'">
+    <div class="position-absolute top-0 start-0 w-100 h-100"
+         style="background: linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,.65));"></div>
+    <div class="position-absolute top-50 start-50 translate-middle text-center text-white px-3">
+        <h1 class="display-5 fw-bold">Hotel Aloha</h1>
+        <p class="lead mb-3">Confort, calidez y una ubicación ideal para tu estadía.</p>
+        <button class="btn btn-primary btn-lg" @onclick="GoHabitaciones">
+            Ver habitaciones
+        </button>
+    </div>
+</div>
+
+<!-- SOBRE NOSOTROS -->
+<section class="mb-5">
+    <h2 class="mb-3">Sobre nosotros</h2>
+    <p class="text-muted">
+        En <strong>Hotel Aloha</strong> combinamos atención cercana con servicios modernos para que disfrutes
+        una experiencia memorable, ya sea por trabajo o descanso. Nuestro equipo está disponible 24/7 y nuestras
+        instalaciones fueron pensadas para que te sientas como en casa.
+    </p>
+</section>
+
+<!-- INSTALACIONES -->
+<section class="mb-5">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+        <h3 class="mb-0">Instalaciones</h3>
+        <small class="text-muted">Conocé nuestros espacios</small>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-3 g-3">
+        @foreach (var i in _instalaciones)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <img src="@i.Img"
+                         class="card-img-top object-fit-cover"
+                         style="height: 180px;"
+                         alt="@i.Titulo"
+                         onerror="this.src='img/Home/fondo.png'">
+                    <div class="card-body">
+                        <h5 class="card-title">@i.Titulo</h5>
+                        <p class="card-text text-muted">@i.Desc</p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- HABITACIONES -->
+<section class="mb-5">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+        <h3 class="mb-0">Habitaciones</h3>
+        <a class="btn btn-outline-primary btn-sm" href="/habitaciones">Ver disponibilidad</a>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-3 g-3">
+        @foreach (var h in _habitaciones)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <img src="@h.Img"
+                         class="card-img-top object-fit-cover"
+                         style="height: 180px;"
+                         alt="@h.Titulo"
+                         onerror="this.src='img/Home/fondo.png'">
+                    <div class="card-body">
+                        <h5 class="card-title">@h.Titulo</h5>
+                        <p class="card-text text-muted">@h.Desc</p>
+                        <span class="badge bg-secondary">@h.Capacidad</span>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- MISION / VISION / VALORES -->
+<section class="mb-5">
+    <h3 class="mb-3">Nuestra esencia</h3>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Misión</h5>
+                    <p class="card-text text-muted">
+                        Brindar una hospitalidad honesta y de calidad, con servicios confiables y atención personalizada,
+                        creando experiencias positivas en cada visita.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Visión</h5>
+                    <p class="card-text text-muted">
+                        Ser el hotel preferido de la ciudad por su calidez, innovación y compromiso con el confort de nuestros huéspedes.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Valores</h5>
+                    <ul class="text-muted mb-0">
+                        <li>Respeto y empatía</li>
+                        <li>Excelencia en el servicio</li>
+                        <li>Transparencia y honestidad</li>
+                        <li>Trabajo en equipo</li>
+                        <li>Sustentabilidad y cuidado del entorno</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="text-center py-4 bg-light rounded-3">
+    <h4 class="mb-2">¿Listo para tu estadía?</h4>
+    <p class="text-muted mb-3">Elegí tu habitación y agregá servicios adicionales.</p>
+    <a class="btn btn-primary btn-lg" href="/habitaciones">Reservar ahora</a>
+</section>
+
+@code {
+    private void GoHabitaciones() => Nav.NavigateTo("/habitaciones");
+
+    // Rutas EXACTAS según tu captura:
+    // wwwroot/img/Hotel/{cochera,gimnasio,lobby,piscina,resto}.jpg
+    // wwwroot/img/Habitaciones/{doble,standart,suite}.jpg
+
+    private readonly List<Card> _instalaciones = new()
+    {
+        new("img/Hotel/lobby.jpg",   "Lobby & Recepción", "Espacio amplio con sillones, café de cortesía y asistencia 24/7."),
+        new("img/Hotel/piscina.jpg", "Piscina",           "Piscina climatizada con solárium y toallas disponibles."),
+        new("img/Hotel/gimnasio.jpg","Gimnasio",          "Equipamiento completo para mantener tu rutina."),
+        // No tenés salon.jpg -> usamos lobby.jpg para “Salón de eventos”
+        new("img/Hotel/lobby.jpg",   "Salón de eventos",  "Ideal para reuniones y capacitaciones (hasta 60 personas)."),
+        new("img/Hotel/resto.jpg",   "Restó & Bar",       "Desayuno buffet y carta con opciones locales."),
+        new("img/Hotel/cochera.jpg", "Cochera",           "Cochera cubierta con acceso directo al lobby."),
+    };
+
+    private readonly List<RoomCard> _habitaciones = new()
+    {
+        new("img/Habitaciones/standart.jpg", "Standard", "Confort esencial para 1-2 personas.", "Capacidad: 2 pax"),
+        new("img/Habitaciones/doble.jpg",    "Doble",    "Dos camas individuales y espacio extra.", "Capacidad: 2-3 pax"),
+        new("img/Habitaciones/suite.jpg",    "Suite",    "Ambiente amplio con living y vista.", "Capacidad: 2-4 pax"),
+    };
+
+    private record Card(string Img, string Titulo, string Desc);
+    private record RoomCard(string Img, string Titulo, string Desc, string Capacidad);
+}

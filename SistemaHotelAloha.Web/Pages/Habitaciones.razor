@@ -1,0 +1,237 @@
+﻿@page "/habitaciones"
+@using SistemaHotelAloha.AccesoDatos
+@using SistemaHotelAloha.AccesoDatos.Models
+@using System.Security.Claims
+@inject ReservasAdoRepository Repo
+@inject AuthenticationStateProvider Auth
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<h2>Reservar habitación</h2>
+
+@if (!string.IsNullOrEmpty(_error))
+{
+    <div class="alert alert-danger">
+        <strong>No pudimos cargar las habitaciones.</strong><br />
+        @_error
+    </div>
+}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row gy-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Tipo de habitación</label>
+                <select class="form-select" @bind="_capacidadMin" disabled="@_cargando">
+                    <option value="1">Cualquiera</option>
+                    <option value="2">Doble (≥ 2)</option>
+                    <option value="3">Triple (≥ 3)</option>
+                    <option value="4">Familiar (≥ 4)</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Desde</label>
+                <input class="form-control" type="date" @bind="_desde" disabled="@_cargando" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Hasta</label>
+                <input class="form-control" type="date" @bind="_hasta" disabled="@_cargando" />
+            </div>
+            <div class="col-12">
+                <button class="btn btn-primary w-100" @onclick="Buscar" disabled="@_cargando">
+                    @if (_cargando)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+ Buscar disponibilidad
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (_buscado)
+{
+    @if (_disponibles.Count == 0)
+    {
+        <div class="alert alert-warning">No hay habitaciones disponibles para el rango seleccionado.</div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-3 g-3">
+            @foreach (var h in _disponibles)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <img src="@ImagenDe(h)" class="card-img-top object-fit-cover" style="height: 180px;"
+                             alt="@h.Nombre" onerror="this.src='/img/Habitaciones/standart.jpg'">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">@h.Nombre</h5>
+                            <p class="card-text text-muted mb-2">
+                                Capacidad: @h.Capacidad<br />
+                                Precio por noche: @h.PrecioNoche.ToString("C")
+                            </p>
+                            <div class="mt-auto d-grid">
+                                <button class="btn btn-success" @onclick="() => Reservar(h)">
+                                    Reservar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+
+@code {
+    private List<HabitacionDTO> _todas = new();
+    private List<HabitacionDTO> _disponibles = new();
+    private bool _cargando;
+    private bool _buscado;
+    private string? _error;
+
+    // Filtros
+    private int _capacidadMin = 1; // 1 = cualquiera
+    private DateTime _desde = DateTime.Today.AddDays(1);
+    private DateTime _hasta = DateTime.Today.AddDays(2);
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            _cargando = true;
+            // Cargar todas las habitaciones una sola vez (hotel único)
+            _todas = Repo.ListarHabitacionesPorDestino(1).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = NormalizarMensaje(ex);
+            Console.WriteLine($"[Habitaciones.Init] {ex}");
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private async Task Buscar()
+    {
+        _buscado = true;
+        _disponibles.Clear();
+
+        // Validaciones de fechas
+        if (_hasta <= _desde)
+        {
+            await JS.InvokeVoidAsync("alert", "La fecha 'Hasta' debe ser posterior a 'Desde'.");
+            return;
+        }
+
+        try
+        {
+            _cargando = true;
+
+            // Filtrado por "tipo" = capacidad mínima
+            var candidatas = _todas
+              .Where(h => h.Capacidad >= _capacidadMin || _capacidadMin == 1)
+              .ToList();
+
+            // Chequeo de disponibilidad por habitación
+            foreach (var h in candidatas)
+            {
+                bool ok;
+                try
+                {
+                    ok = Repo.HabitacionDisponible(h.Id, _desde, _hasta);
+                }
+                catch (Exception ex)
+                {
+                    // Si una falla, seguimos con las demás, y mostramos pista
+                    Console.WriteLine($"[Disponibilidad] Hab {h.Id}: {ex.Message}");
+                    ok = false;
+                    _error ??= NormalizarMensaje(ex);
+                }
+
+                if (ok) _disponibles.Add(h);
+            }
+        }
+        finally
+        {
+            _cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task Reservar(HabitacionDTO h)
+    {
+        // Chequeo de login
+        var auth = await Auth.GetAuthenticationStateAsync();
+        var user = auth.User;
+        if (user?.Identity?.IsAuthenticated != true)
+        {
+            // Redirijo a login y vuelvo luego
+            Nav.NavigateTo($"/auth/login?returnUrl=/habitaciones", forceLoad: true);
+            return;
+        }
+
+        // Validación de fechas por si tocaron el DOM
+        if (_hasta <= _desde)
+        {
+            await JS.InvokeVoidAsync("alert", "Rango de fechas inválido.");
+            return;
+        }
+
+        // Confirmo disponibilidad nuevamente por seguridad
+        if (!Repo.HabitacionDisponible(h.Id, _desde, _hasta))
+        {
+            await JS.InvokeVoidAsync("alert", "La habitación ya no está disponible. Actualizá la búsqueda.");
+            return;
+        }
+
+        // Nombre del huésped
+        var huesped = user.Identity?.Name ?? "Huésped";
+
+        try
+        {
+            var uidStr = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(uidStr, out var idUsuario))
+            {
+                // Si no hay id numérico, igual redirigimos a login
+                Nav.NavigateTo($"/auth/login?returnUrl=/habitaciones", forceLoad: true);
+                return;
+            }
+
+            var idReserva = Repo.CrearReserva(idUsuario, h.Id, huesped, _desde, _hasta);
+            await JS.InvokeVoidAsync("alert", $"Reserva #{idReserva} creada.");
+            // Podés ir a Mis Reservas o directamente al PDF:
+            Nav.NavigateTo($"/pdf/reserva/{idReserva}", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Reservar] {ex}");
+            await JS.InvokeVoidAsync("alert", "No se pudo crear la reserva.");
+        }
+    }
+
+    private string ImagenDe(HabitacionDTO h)
+    {
+        // Mapea por capacidad a tus imágenes
+        if (h.Capacidad >= 4) return "/img/Habitaciones/suite.jpg";
+        if (h.Capacidad >= 3) return "/img/Habitaciones/doble.jpg";
+        return "/img/Habitaciones/standart.jpg";
+    }
+
+    private string NormalizarMensaje(Exception ex)
+    {
+        var msg = ex.Message;
+        if (msg.Contains("Unknown column", StringComparison.OrdinalIgnoreCase) ||
+            msg.Contains("doesn't exist", StringComparison.OrdinalIgnoreCase))
+            return "Falta alguna tabla/columna en la base de datos. Ejecutá el script de esquema.";
+        if (msg.Contains("Unable to connect", StringComparison.OrdinalIgnoreCase) ||
+            msg.Contains("Authentication", StringComparison.OrdinalIgnoreCase))
+            return "No se pudo conectar a la base. Verificá la cadena de conexión (DefaultConnection).";
+        if (msg.Contains("Requested value 'None'"))
+            return "Hay un valor inesperado en la base (por ejemplo 'None' en una columna de tipo). Revisá datos de prueba.";
+        return msg;
+    }
+}

@@ -1,0 +1,8 @@
+{
+  "dotnet_code": 127,
+  "dotnet_stdout": "",
+  "dotnet_stderr": "/bin/sh: 1: dotnet: not found",
+  "build_code": null,
+  "build_stdout": "",
+  "build_stderr": "dotnet not found in environment."
+}

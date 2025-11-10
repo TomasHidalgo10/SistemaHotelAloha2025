@@ -1,15 +1,14 @@
-﻿@page "/auth/logout"
-@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
-@using SistemaHotelAloha.Web.Auth
-@inject SimpleAuthStateProvider Auth
+﻿@page "/logout"
+@page "/auth/logout"
+@inject SistemaHotelAloha.Web.Auth.SimpleAuthStateProvider Auth
 @inject NavigationManager Nav
 
-<h3>Cerrando sesión...</h3>
+<div class="text-light">Cerrando sesión…</div>
 
 @code {
     protected override async Task OnInitializedAsync()
     {
-        await Auth.SignOutAsync();
-        Nav.NavigateTo("/", forceLoad: false);
+        await Auth.LogoutAsync(); // también existe el alias SignOutAsync()
+        Nav.NavigateTo("/", forceLoad: true);
     }
 }

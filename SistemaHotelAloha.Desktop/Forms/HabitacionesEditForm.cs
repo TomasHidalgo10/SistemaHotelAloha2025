@@ -1,13 +1,8 @@
 ﻿using MySql.Data.MySqlClient;
 using SistemaHotelAloha.Desktop.Helpers;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Globalization;
 using System.Windows.Forms;
 
 namespace SistemaHotelAloha.Desktop.Forms
@@ -17,32 +12,42 @@ namespace SistemaHotelAloha.Desktop.Forms
         private readonly bool _esEdicion;
         private readonly int _idEditar;
 
+        // Alta (nueva habitación)
         public HabitacionEditForm()
         {
             InitializeComponent();
             _esEdicion = false;
+            _idEditar = 0;
+            Text = "Nueva habitación";
+            this.Load += HabitacionEditForm_Load;
         }
 
+        // Edición
         public HabitacionEditForm(int id, string numero, int tipoId, int capacidad, decimal precio)
         {
             InitializeComponent();
             _esEdicion = true;
             _idEditar = id;
+            Text = "Editar habitación";
 
             txtNumero.Text = numero;
             numCapacidad.Value = capacidad;
-            txtPrecio.Text = precio.ToString("0.##");
-            // El Tipo se selecciona en Load cuando ya está cargado el combo.
+            txtPrecio.Text = precio.ToString("0.##", CultureInfo.InvariantCulture);
+
             this.Load += (s, e) =>
             {
+                CargarTipos();
                 if (cbTipo.DataSource != null)
                     cbTipo.SelectedValue = tipoId;
+                // usar el flag realmente -> evita CS0414
+                txtNumero.ReadOnly = _esEdicion; // por ejemplo, en edición no dejamos cambiar el número
             };
         }
 
-        private void HabitacionEditForm_Load(object sender, EventArgs e)
+        private void HabitacionEditForm_Load(object? sender, EventArgs e)
         {
-            CargarTipos();
+            // En alta también cargamos los tipos
+            if (!_esEdicion) CargarTipos();
         }
 
         private void CargarTipos()
@@ -67,10 +72,24 @@ namespace SistemaHotelAloha.Desktop.Forms
             }
         }
 
+        // Propiedades para leer valores ingresados
         public string Numero => txtNumero.Text.Trim();
         public int TipoId => Convert.ToInt32(cbTipo.SelectedValue ?? 0);
         public int Capacidad => Convert.ToInt32(numCapacidad.Value);
-        public decimal PrecioNoche => decimal.TryParse(txtPrecio.Text.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var d) ? d : 0m;
+
+        public decimal PrecioNoche
+        {
+            get
+            {
+                var raw = (txtPrecio.Text ?? "").Trim().Replace(",", ".");
+                return decimal.TryParse(
+                    raw,
+                    NumberStyles.Any,
+                    CultureInfo.InvariantCulture,
+                    out var d
+                ) ? d : 0m;
+            }
+        }
 
         private void btnAceptar_Click(object sender, EventArgs e)
         {
@@ -80,6 +99,7 @@ namespace SistemaHotelAloha.Desktop.Forms
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+
             DialogResult = DialogResult.OK;
         }
 

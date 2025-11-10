@@ -1,122 +1,95 @@
+@page "/login"
 @page "/auth/login"
-@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
-
-@using SistemaHotelAloha.AccesoDatos
-@using SistemaHotelAloha.Web.Auth
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.AspNetCore.Components.Web
 @using System.ComponentModel.DataAnnotations
-@using Microsoft.AspNetCore.Components.Forms
-
 @inject NavigationManager Nav
-@inject SimpleAuthStateProvider Auth
+@inject SistemaHotelAloha.Web.Auth.SimpleAuthStateProvider Auth
 
-@* Si tenés un servicio ADO inyectable, descomentá e implementá en Program.cs
-   services.AddScoped<UsuarioAdoRepository>(); *@
-@* @inject UsuarioAdoRepository Usuarios *@
+<h3 class="text-light mb-3">Iniciar sesión</h3>
 
-<div class="container py-4">
-    <div class="card p-4 mx-auto" style="max-width: 520px;">
-        <h3 class="mb-3">Iniciar sesión</h3>
+<div class="card bg-dark text-light shadow p-4" style="max-width:420px">
+    <EditForm Model="@_model" OnValidSubmit="HandleLogin">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
 
-        @if (!string.IsNullOrWhiteSpace(_error))
-        {
-            <div class="alert alert-danger">@_error</div>
-        }
-
-        <EditForm Model="_vm" OnValidSubmit="OnSubmit">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
-
-            <div class="mb-3">
-                <label class="form-label">Email</label>
-                <InputText class="form-control"
-                           autocomplete="username"
-                           @bind-Value="_vm.UsernameOrEmail" />
-                <ValidationMessage For="@(() => _vm.UsernameOrEmail)" />
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Contraseña</label>
-                <InputText class="form-control"
-                           type="password"
-                           autocomplete="current-password"
-                           @bind-Value="_vm.Password" />
-                <ValidationMessage For="@(() => _vm.Password)" />
-            </div>
-
-            <button class="btn btn-primary w-100" disabled="@_busy">
-                @(_busy ? "Ingresando..." : "Entrar")
-            </button>
-        </EditForm>
-
-        <div class="text-center mt-3">
-            <NavLink href="/auth/register">¿No tenés cuenta? Registrate</NavLink>
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <InputText class="form-control" @bind-Value="_model.Email" />
+            <ValidationMessage For="@(() => _model.Email)" />
         </div>
-    </div>
+
+        <div class="mb-3">
+            <label class="form-label">Contraseña</label>
+            <InputText class="form-control" @bind-Value="_model.Password" type="password" @onkeydown="OnKeyDown" />
+            <ValidationMessage For="@(() => _model.Password)" />
+        </div>
+
+        <button class="btn btn-primary w-100" type="submit" disabled="@_loading">
+            @if (_loading)
+            {
+                <span class="spinner-border spinner-border-sm me-2"></span>
+            }
+            Ingresar
+        </button>
+
+        @if (!string.IsNullOrWhiteSpace(_mensaje))
+        {
+            <div class="alert alert-warning mt-3">@_mensaje</div>
+        }
+    </EditForm>
 </div>
 
 @code {
-    private readonly LoginVM _vm = new();
-    private bool _busy;
-    private string? _error;
+    private LoginModel _model = new();
+    private string? _mensaje;
+    private bool _loading;
 
-    private async Task OnSubmit()
+    private async Task HandleLogin()
     {
-        _error = null;
-        _busy = true;
+        if (_loading) return;
+        _mensaje = null;
 
+        _loading = true;
         try
         {
-            // -----------------------------
-            // 1) Validar credenciales (ADO.NET)
-            // -----------------------------
-            var repo = new UsuarioAdoRepository();
-
-            // En el esquema actual el login es por Email + Contraseña
-            var userId = repo.Authenticate(_vm.UsernameOrEmail, _vm.Password);
-            if (userId <= 0)
+            var ok = await Auth.LoginAsync(_model.Email, _model.Password);
+            if (!ok)
             {
-                _error = "Usuario o contraseña inválidos.";
+                _mensaje = "Credenciales inválidas.";
                 return;
             }
 
-            // Obtener un nombre visible (si no hay, cae al email)
-            var displayName = repo.GetNombreCompletoById(userId);
-            if (string.IsNullOrWhiteSpace(displayName))
-                displayName = _vm.UsernameOrEmail;
-
-            // -----------------------------
-            // 2) Guardar sesión (4 parámetros)
-            // -----------------------------
-            await Auth.SignInAsync(
-                userId: userId,
-                name: displayName,
-                email: _vm.UsernameOrEmail,
-                role: "User"
-            );
-
-            // -----------------------------
-            // 3) Redirigir
-            // -----------------------------
-            Nav.NavigateTo("/", forceLoad: true);
+            // volver al returnUrl si vino en la query
+            var uri = Nav.ToAbsoluteUri(Nav.Uri);
+            var q = QueryHelpers.ParseQuery(uri.Query);
+            if (q.TryGetValue("returnUrl", out var ret) && !string.IsNullOrWhiteSpace(ret))
+                Nav.NavigateTo(ret!, forceLoad: true);
+            else
+                Nav.NavigateTo("/", forceLoad: true);
         }
         catch (Exception ex)
         {
-            _error = "No se pudo iniciar sesión. " + ex.Message;
+            _mensaje = "Error al iniciar sesión: " + ex.Message;
         }
         finally
         {
-            _busy = false;
-            StateHasChanged();
+            _loading = false;
         }
     }
 
-    public class LoginVM
+    private async Task OnKeyDown(KeyboardEventArgs e)
     {
-        [Required(ErrorMessage = "Ingresá tu email")]
-        [EmailAddress(ErrorMessage = "Formato de email inválido")]
-        public string UsernameOrEmail { get; set; } = string.Empty;
+        if (e.Key == "Enter")
+            await HandleLogin();
+    }
 
-        [Required(ErrorMessage = "Ingresá la contraseña")]
-        public string Password { get; set; } = string.Empty;
+    private class LoginModel
+    {
+        [Required, EmailAddress(ErrorMessage = "Email inválido")]
+        public string Email { get; set; } = "";
+
+        [Required]
+        public string Password { get; set; } = "";
     }
 }

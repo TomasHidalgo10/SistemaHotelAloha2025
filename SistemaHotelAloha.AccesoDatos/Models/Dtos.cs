@@ -6,23 +6,30 @@ using System.Threading.Tasks;
 
 namespace SistemaHotelAloha.AccesoDatos.Models
 {
-    // ===== Nico: usado por el reporte mensual (PDF/tabla) =====
+
+    // Extiende el DTO existente sin modificar el proyecto de AccesoDatos.
+
     public class ReservaReporteDto
     {
         public int IdReserva { get; set; }
-        public string? Huesped { get; set; } = "";
-        public string? HabitacionNumero { get; set; } = "";
-        public string? HabitacionTipo { get; set; } = "";
+        public string? Huesped { get; set; }
+        public string? HabitacionTipo { get; set; }
+        public int HabitacionNumero { get; set; }
         public DateTime FechaDesde { get; set; }
         public DateTime FechaHasta { get; set; }
         public int Noches { get; set; }
         public decimal Total { get; set; }
-        public string? Estado { get; set; } = "";
+        public string? Estado { get; set; }
+        public DateTime Fecha { get; set; }
+
+        // Si el código usa una lista o referencia general a Reservas
+        public List<ReservaReporteDto>? Reservas { get; set; }
     }
+}
 
-    // ===== DTOs adicionales (compatibles con repos ADO y PDF) =====
+        // ===== DTOs adicionales (compatibles con repos ADO y PDF) =====
 
-    public class HabitacionDTO
+        public class HabitacionDTO
     {
         public int Id { get; set; }
         public string? Nombre { get; set; } = "";     // Ej: "Hab. 101"
@@ -82,4 +89,3 @@ namespace SistemaHotelAloha.AccesoDatos.Models
         public string? PrecioTipo { get; set; } = "PorEstadia";
         public decimal Subtotal { get; set; }         // Calculado en repo (unit * cant * mult)
     }
-}

@@ -1,16 +1,14 @@
 ﻿using MySql.Data.MySqlClient;
 using SistemaHotelAloha.AccesoDatos;
+using SistemaHotelAloha.AccesoDatos.Models;
 using SistemaHotelAloha.Desktop.Forms;
 using SistemaHotelAloha.Desktop.Helpers;
 using SistemaHotelAloha.Desktop.Infra;
 using SistemaHotelAloha.Desktop.Utils;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+using System.Configuration; // para leer App.config
 using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -24,19 +22,25 @@ namespace SistemaHotelAloha.Desktop.Forms
         // Lo detectamos en runtime: "IdHabitacion" o "id_habitacion"
         private string _colReservaHabitacion = "IdHabitacion";
 
-        // Toolbar y controles de reporte
-        private Panel pnlToolbar = new();
-        private FlowLayoutPanel flow = new();
-        private DateTimePicker dtpMesAnio = new();
-        private CheckBox chkIncluirCanceladas = new();
-        private Button btnExportarPdf = new();
+        private readonly ReservasAdoRepository _repo;
 
-        // Si no la usás, podés borrar esta cadena
-        private string _connectionString = "server=127.0.0.1;database=aloha_db;user=root;password=root;SslMode=none;";
+        // Toolbar y controles de reporte
+        private readonly Panel pnlToolbar = new();
+        private readonly FlowLayoutPanel flow = new();
+        private readonly DateTimePicker dtpMesAnio = new();
+        private readonly CheckBox chkIncluirCanceladas = new();
+        private readonly Button btnExportarPdf = new();
 
         public GestionReservas()
         {
             InitializeComponent();
+
+            // connectionString local (no queda campo “asignado y no usado”)
+            var connString = ConfigurationManager
+                .ConnectionStrings["DefaultConnection"]
+                .ConnectionString;
+
+            _repo = new ReservasAdoRepository(connString);
         }
 
         private void GestionReservas_Load(object sender, EventArgs e)
@@ -83,8 +87,6 @@ namespace SistemaHotelAloha.Desktop.Forms
         // ---------------------------------------------
         // Barra superior con DateTimePicker, Check y Botón PDF
         // ---------------------------------------------
-        private Button btnCatalogoMes = new();
-
         private void ConfigurarToolbarReporte()
         {
             // Panel superior
@@ -121,12 +123,6 @@ namespace SistemaHotelAloha.Desktop.Forms
             chkIncluirCanceladas.AutoSize = true;
             chkIncluirCanceladas.Margin = new Padding(12, 10, 0, 0);
 
-            // Botón Catálogo (12 meses)
-            //btnCatalogoMes.Text = "Catálogo";
-            //btnCatalogoMes.AutoSize = true;
-            //btnCatalogoMes.Margin = new Padding(12, 8, 0, 0);
-            //btnCatalogoMes.Click += BtnCatalogoMes_Click;
-
             // Botón Exportar
             btnExportarPdf.Text = "Exportar PDF (mes)";
             btnExportarPdf.AutoSize = true;
@@ -136,10 +132,8 @@ namespace SistemaHotelAloha.Desktop.Forms
             // Agregar al flow
             flow.Controls.Add(dtpMesAnio);
             flow.Controls.Add(chkIncluirCanceladas);
-            //flow.Controls.Add(btnCatalogoMes);
             flow.Controls.Add(btnExportarPdf);
         }
-
 
         private void Cargar()
         {
@@ -221,11 +215,10 @@ namespace SistemaHotelAloha.Desktop.Forms
             int id = Convert.ToInt32(row["id"]);
             // soporta alias "id_habitacion" que suele devolver el SP y también posibles columnas reales
             int idHabitacion = GetInt(row, "id_habitacion", "IdHabitacion", "idHabitacion");
-            string huesped = row.Table.Columns.Contains("huesped") ? row["huesped"]?.ToString() ?? "" : "";
             DateTime desde = Convert.ToDateTime(row["fecha_desde"]);
             DateTime hasta = Convert.ToDateTime(row["fecha_hasta"]);
 
-            using var dlg = new ReservaEditForm(id, idHabitacion, huesped, desde, hasta);
+            using var dlg = new ReservaEditForm(id, idHabitacion, "", desde, hasta);
             if (dlg.ShowDialog(this) != DialogResult.OK) return;
 
             // Validación de solapamiento
@@ -243,7 +236,6 @@ namespace SistemaHotelAloha.Desktop.Forms
                 { CommandType = CommandType.StoredProcedure };
                 cmd.Parameters.AddWithValue("@p_id", id);
                 cmd.Parameters.AddWithValue("@p_id_habitacion", dlg.IdHabitacion);
-                //cmd.Parameters.AddWithValue("@p_huesped", dlg.Huesped);
                 cmd.Parameters.AddWithValue("@p_fecha_desde", dlg.FechaDesde);
                 cmd.Parameters.AddWithValue("@p_fecha_hasta", dlg.FechaHasta);
 
@@ -295,14 +287,10 @@ namespace SistemaHotelAloha.Desktop.Forms
                 var periodo = dtpMesAnio.Value;
                 int anio = periodo.Year;
                 int mes = periodo.Month;
-                bool incluirCanceladas = chkIncluirCanceladas.Checked;
+                bool incluirCanceladas = chkIncluirCanceladas.Checked; // si luego lo usás dentro del PDF
 
-                var repo = new ReservasAdoRepository(); // SIN parámetros
-
-                // Cambiá a true si usás el Stored Procedure sp_reservas_reporte_mes
-                var lista = await Task.Run(() =>
-                    repo.ObtenerReporteMensual(anio, mes, incluirCanceladas, usarStoredProcedure: false)
-                );
+                // 1) Traemos el reporte mensual (lista de ReporteMensualDto)
+                var lista = await Task.Run(() => _repo.ObtenerReporteMensual(anio, mes));
 
                 if (lista.Count == 0)
                 {
@@ -310,6 +298,16 @@ namespace SistemaHotelAloha.Desktop.Forms
                         "Reporte", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
+
+                // 2) Mapeamos al tipo que espera tu exportador (ReservaReporteDto)
+                //    IMPORTANTE: no asignamos 'x.Reservas' (suele ser int) a una List<>
+                var dataExport = lista.Select(x => new ReservaReporteDto
+                {
+                    Fecha = x.Dia,
+                    // Si necesitás la cantidad, agregá una propiedad Cantidad al DTO y usala aquí.
+                    // Cantidad = x.Reservas,
+                    Total = x.Importe // <- reemplaza a 'Importe'
+                }).ToList();
 
                 using var sfd = new SaveFileDialog()
                 {
@@ -322,7 +320,12 @@ namespace SistemaHotelAloha.Desktop.Forms
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
                     await Task.Run(() =>
-                        PdfReportes.ExportarReservasMensuales(lista, new DateTime(anio, mes, 1), sfd.FileName)
+                        // Tu helper acepta IEnumerable<ReservaReporteDto>
+                        PdfReportes.ExportarReservasMensuales(
+                            dataExport,
+                            new DateTime(anio, mes, 1),
+                            sfd.FileName
+                        )
                     );
 
                     MessageBox.Show("PDF generado correctamente.",
@@ -339,6 +342,5 @@ namespace SistemaHotelAloha.Desktop.Forms
                 btnExportarPdf.Enabled = true;
             }
         }
-
     }
 }

@@ -3,46 +3,60 @@ using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using SistemaHotelAloha.AccesoDatos;
 using SistemaHotelAloha.Web.Auth;
 using SistemaHotelAloha.Web.Endpoints;
+using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddScoped<ReservasAdoRepository>();
-// Blazor
-builder.Services.AddRazorPages();
-builder.Services
-    .AddServerSideBlazor()
-    .AddCircuitOptions(o => o.DetailedErrors = true);
 
-// Autenticación “simple” para Blazor
+// --- Acceso a datos ---
+var conn = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Falta ConnectionStrings:DefaultConnection en appsettings.json (Web)");
+builder.Services.AddScoped(_ => new ReservasAdoRepository(conn));
+
+// --- Blazor / Razor / Controllers ---
+builder.Services.AddRazorPages();
+builder.Services.AddServerSideBlazor().AddCircuitOptions(o => o.DetailedErrors = true);
+builder.Services.AddControllers();
+
+// --- Auth simple + almacenamiento protegido ---
 builder.Services.AddAuthorizationCore();
-builder.Services.AddScoped<SimpleAuthStateProvider>(); // <-- el tuyo
+// IMPORTANTÍSIMO: registra todos los servicios de Protected*Storage
+builder.Services.AddScoped<ProtectedLocalStorage>();
+builder.Services.AddScoped<ProtectedSessionStorage>();
+
+
+builder.Services.AddScoped<SimpleAuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
     sp.GetRequiredService<SimpleAuthStateProvider>());
 
-// Controllers (PDF)
-builder.Services.AddControllers();
+// Si usas IHttpContextAccessor para endpoints PDF, etc.
 builder.Services.AddHttpContextAccessor();
-
-// Repo ADO.NET con cadena válida
-var conn = builder.Configuration.GetConnectionString("DefaultConnection");
-if (string.IsNullOrWhiteSpace(conn))
-    throw new InvalidOperationException("Falta ConnectionStrings:DefaultConnection en appsettings.json del proyecto Web");
-builder.Services.AddScoped(_ => new ReservasAdoRepository(conn));
+QuestPDF.Settings.License = LicenseType.Community;
 
 var app = builder.Build();
 
-if (!app.Environment.IsDevelopment())
+// --- Pipeline ---
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
 {
     app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 
+app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
+
+app.MapControllers();
+app.MapPdfEndpoints();               
 app.MapBlazorHub();
-app.MapFallbackToPage("/_Host");
+app.MapFallbackToPage("/_Host");      
 
 app.Run();

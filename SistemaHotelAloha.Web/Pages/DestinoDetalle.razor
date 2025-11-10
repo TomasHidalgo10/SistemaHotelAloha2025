@@ -1,143 +1,164 @@
-﻿@page "/destino/{Id:int}"
-@using SistemaHotelAloha.AccesoDatos
-@using SistemaHotelAloha.AccesoDatos.Models
-@using System.Security.Claims
-@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
-
-@inject ReservasAdoRepository Repo
+﻿@page "/destino/{Destino?}"
+@inject SistemaHotelAloha.AccesoDatos.ReservasAdoRepository Repo
+@inject NavigationManager Nav
 @inject AuthenticationStateProvider Auth
 @inject IJSRuntime JS
-@inject NavigationManager Nav
 
-<h3>Habitaciones del destino</h3>
+<h2 class="mb-3">Destino: @(!string.IsNullOrWhiteSpace(Destino) ? Destino : "Todos")</h2>
 
-<div class="row g-3 mb-3">
-    <div class="col-md-6">
-        <label class="form-label">Habitación</label>
-        <select class="form-select" @bind="_habId">
-            <option value="0">-- Elegir --</option>
-            @foreach (var h in _habitaciones)
-            {
-                <option value="@h.Id">@h.Nombre (cap: @h.Capacidad) — @h.PrecioNoche.ToString("C")</option>
-            }
-        </select>
-    </div>
-    <div class="col-md-3">
-        <label class="form-label">Desde</label>
-        <input class="form-control" type="date" @bind="_desde" />
-    </div>
-    <div class="col-md-3">
-        <label class="form-label">Hasta</label>
-        <input class="form-control" type="date" @bind="_hasta" />
-    </div>
-    <div class="col-md-6">
-        <label class="form-label">Huésped (opcional)</label>
-        <input class="form-control" @bind="_huesped" placeholder="Nombre del huésped" />
-    </div>
-    <div class="col-md-12 d-flex gap-2">
-        <button class="btn btn-outline-secondary" @onclick="VerDisponibilidad">Ver disponibilidad</button>
-        <button class="btn btn-primary" @onclick="Reservar">Reservar</button>
-    </div>
-</div>
-
-@if (!string.IsNullOrEmpty(_mensaje))
+@if (_cargando)
 {
-    <div class="alert @(_disponible ? "alert-success" : "alert-danger") mt-2">
-        @_mensaje
+    <div class="text-center py-4"><div class="spinner-border"></div></div>
+}
+else if (!string.IsNullOrEmpty(_error))
+{
+    <div class="alert alert-warning">@_error</div>
+}
+else if (_habitaciones is null || _habitaciones.Count == 0)
+{
+    <div class="alert alert-info">No hay habitaciones para este destino.</div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-3 g-3">
+        @foreach (var h in _habitaciones)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    @if (!string.IsNullOrWhiteSpace(h.Foto))
+                    {
+                        <img src="@h.Foto" class="card-img-top" style="height:180px;object-fit:cover"
+                             onerror="this.style.display='none'">
+                    }
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">@h.Nombre</h5>
+                        <p class="text-muted mb-2">@h.Tipo</p>
+                        <p class="mb-3"><strong>Precio/noche:</strong> @h.Precio.ToString("C")</p>
+                        <button class="btn btn-primary mt-auto" @onclick="() => AbrirReserva(h.Id)">Reservar</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (_mostrarReserva)
+{
+    <div class="modal fade show d-block" style="background:rgba(0,0,0,.5);" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reservar habitación</h5>
+                    <button type="button" class="btn-close" @onclick="CerrarReserva"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label">Desde</label>
+                    <input type="date" class="form-control mb-2" @bind="_desde" />
+                    <label class="form-label">Hasta</label>
+                    <input type="date" class="form-control mb-3" @bind="_hasta" />
+                    <button class="btn btn-success w-100" @onclick="ConfirmarReserva" disabled="@_reservando">
+                        @if (_reservando)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                        }
+                        Confirmar reserva
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 }
 
 @code {
-    [Parameter] public int Id { get; set; }  // id del destino (en nuestro repo es virtual, pero lo mantenemos)
+    [Parameter] public string? Destino { get; set; }
 
-    private List<HabitacionDTO> _habitaciones = new();
-    private int _habId;
-    private DateTime _desde = DateTime.Today.AddDays(1);
-    private DateTime _hasta = DateTime.Today.AddDays(2);
-    private string? _huesped;
-    private bool _disponible;
-    private string? _mensaje;
+    private bool _cargando;
+    private string? _error;
 
-    protected override void OnInitialized()
+    private List<SistemaHotelAloha.AccesoDatos.ReservasAdoRepository.HabitacionDto>? _habitaciones;
+
+    private bool _mostrarReserva;
+    private bool _reservando;
+    private int _habitacionSeleccionada;
+    private DateTime _desde = DateTime.Today;
+    private DateTime _hasta = DateTime.Today.AddDays(1);
+
+    protected override async Task OnParametersSetAsync()
     {
-        // En nuestro repo el destino es virtual, pero dejamos la ruta para no romper URLs
-        _habitaciones = Repo.ListarHabitacionesPorDestino(Id).ToList();
-    }
-
-    private async Task VerDisponibilidad()
-    {
-        _mensaje = null;
-        if (!ValidarEntrada()) return;
-
+        _cargando = true;
+        _error = null;
         try
         {
-            _disponible = Repo.HabitacionDisponible(_habId, _desde, _hasta);
-            _mensaje = _disponible ? "Disponible para ese rango." : "No está disponible en ese rango.";
+            // Repo espera string => usamos el parámetro Destino (nombre del tipo) o vacío
+            _habitaciones = await Repo.ListarHabitacionesPorDestino(Destino ?? string.Empty);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[Disponibilidad] {ex}");
-            await JS.InvokeVoidAsync("alert", "No se pudo verificar disponibilidad.");
+            _error = "Error al cargar: " + ex.Message;
+        }
+        finally
+        {
+            _cargando = false;
         }
     }
 
-    private async Task Reservar()
+    private void AbrirReserva(int idHabitacion)
     {
-        _mensaje = null;
-        if (!ValidarEntrada()) return;
+        _habitacionSeleccionada = idHabitacion;
+        _mostrarReserva = true;
+    }
 
-        // Necesitamos usuario logueado
-        var auth = await Auth.GetAuthenticationStateAsync();
-        var uidStr = auth.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!int.TryParse(uidStr, out var idUsuario))
-        {
-            await JS.InvokeVoidAsync("alert", "Debés iniciar sesión para reservar.");
-            Nav.NavigateTo("/auth/login");
-            return;
-        }
+    private void CerrarReserva()
+    {
+        _mostrarReserva = false;
+        _reservando = false;
+    }
+
+    private async Task ConfirmarReserva()
+    {
+        if (_reservando) return;
+        _reservando = true;
 
         try
         {
-            // Si no escriben huésped, usamos el nombre del usuario o "Huésped"
-            var nombreUsuario = auth.User.Identity?.Name;
-            var huesped = string.IsNullOrWhiteSpace(_huesped) ? (nombreUsuario ?? "Huésped") : _huesped;
+            if (_hasta <= _desde)
+                throw new Exception("La fecha hasta debe ser mayor a la fecha desde.");
 
-            // 1) chequeo de disponibilidad
-            if (!Repo.HabitacionDisponible(_habId, _desde, _hasta))
+            // Verificamos login
+            var state = await Auth.GetAuthenticationStateAsync();
+            var user = state.User;
+            if (!(user.Identity?.IsAuthenticated ?? false))
             {
-                _disponible = false;
-                _mensaje = "No está disponible en ese rango.";
+                var returnUrl = Nav.Uri;
+                Nav.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(returnUrl)}");
                 return;
             }
 
-            // 2) crear reserva — FIRMA NUEVA que pedía el parámetro faltante
-            var nuevaId = Repo.CrearReserva(idUsuario, _habId, huesped, _desde, _hasta);
+            // Validamos disponibilidad
+            var ok = await Repo.HabitacionDisponibleAsync(_habitacionSeleccionada, _desde, _hasta);
+            if (!ok) throw new Exception("La habitación no está disponible para ese rango.");
 
-            _disponible = true;
-            _mensaje = $"Reserva #{nuevaId} creada.";
-            await JS.InvokeVoidAsync("alert", _mensaje);
-            Nav.NavigateTo("/reservas");
+            // Id de usuario actual
+            var idStr = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrWhiteSpace(idStr) || !int.TryParse(idStr, out var idUsuario))
+                throw new Exception("No se pudo determinar el usuario.");
+
+            // Cliente vinculado (si no existe lo crea)
+            var idCliente = await Repo.AsegurarClienteParaUsuarioAsync(idUsuario);
+
+            // Crear reserva y redirigir (si tenés PDF)
+            var idReserva = await Repo.CrearReserva(idUsuario, idCliente, _habitacionSeleccionada, _desde, _hasta);
+            await JS.InvokeVoidAsync("alert", $"Reserva creada con éxito. Id: {idReserva}");
+            // Nav.NavigateTo($"/pdf/reserva/{idReserva}", forceLoad: true);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[Reservar] {ex}");
-            await JS.InvokeVoidAsync("alert", "No se pudo crear la reserva.");
+            await JS.InvokeVoidAsync("alert", "Error al reservar: " + ex.Message);
         }
-    }
-
-    private bool ValidarEntrada()
-    {
-        if (_habId <= 0)
+        finally
         {
-            JS.InvokeVoidAsync("alert", "Elegí una habitación.");
-            return false;
+            _reservando = false;
+            _mostrarReserva = false;
         }
-
-        if (_hasta <= _desde)
-        {
-            JS.InvokeVoidAsync("alert", "El rango de fechas es inválido.");
-            return false;
-        }
-        return true;
     }
 }
